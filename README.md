@@ -45,7 +45,7 @@ _To be written once the first command works._
 
 Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
-_List the ADRs here as they are accepted._
+- [ADR-0001: Inventory schema for applications and IT components](docs/adr/0001-inventory-schema.md), accepted 2026-10-03.
 
 ## Limits
 
@@ -56,4 +56,4 @@ _List the ADRs here as they are accepted._
 
 ## Status
 
-Scoping done. Inventory schema in progress (ADR-0001).
+Scoping done. Inventory schema decided (ADR-0001). Next: Pydantic models.
