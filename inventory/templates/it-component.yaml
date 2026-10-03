@@ -1,0 +1,27 @@
+# Template for an IT component record (a technology an application runs on).
+# Copy this file to inventory/it-components/<id>.yaml and replace every value.
+# Schema: docs/adr/0001-inventory-schema.md. Fields not listed here are rejected.
+# Fields marked "required" must be present. Fields marked "optional" can be deleted.
+# One record per version: the end-of-life date belongs to a version, not to a product.
+
+# required. Kebab-case slug (lowercase letters, digits, hyphens).
+# Must be identical to the file name without ".yaml".
+id: it-component
+
+# required. Product and version, for example "Oracle Database 19c".
+name: IT component template
+
+# required. One of: software, hardware, service.
+category: software
+
+# optional. Vendor name.
+vendor: Replace with the vendor name
+
+# optional. Keep the quotes: without them YAML reads 1.0 as a number, not as text.
+version: "1.0"
+
+# optional. Dates as YYYY-MM-DD, in chronological order.
+# end_of_life is the date the anomaly report uses. Delete the block if nothing is known.
+lifecycle:
+  active: 2015-01-01
+  end_of_life: 2025-12-31

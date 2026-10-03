@@ -1,0 +1,50 @@
+# Template for an application record.
+# Copy this file to inventory/applications/<id>.yaml and replace every value.
+# Schema: docs/adr/0001-inventory-schema.md. Fields not listed here are rejected.
+# Fields marked "required" must be present. Fields marked "optional" can be deleted.
+
+# required. Kebab-case slug (lowercase letters, digits, hyphens).
+# Must be identical to the file name without ".yaml".
+id: application
+
+# required. Display name.
+name: Application template
+
+# required. One sentence saying what the application does.
+description: Replace with one sentence describing the application.
+
+# optional. Team or person who decides for the application.
+# Delete the line if unknown: the report will list the application as an anomaly.
+business_owner: Replace with a team or a person
+
+# optional. Team or person who operates the application.
+technical_owner: Replace with a team or a person
+
+# required. One of: mission_critical, business_critical, business_operational, administrative_service.
+business_criticality: business_operational
+
+# required. One of: data_center, cloud, saas, store.
+hosting: data_center
+
+# required. Dates as YYYY-MM-DD, at least one phase, in chronological order.
+# Delete the phases you do not know. The current status is derived from these dates.
+lifecycle:
+  plan: 2014-01-01
+  phase_in: 2014-09-01
+  active: 2015-03-01
+  phase_out: 2027-06-30
+  end_of_life: 2027-12-31
+
+# optional. Applications this one needs to work, declared from the consumer side.
+# application: id of an existing record under inventory/applications/.
+# type: one of api (synchronous call), file (file transfer or batch),
+#   database (direct access to the other application's database), event (message or queue).
+# description: optional.
+depends_on:
+  - application: other-application
+    type: api
+    description: Replace with what this dependency is used for.
+
+# optional. Ids of existing records under inventory/it-components/.
+it_components:
+  - it-component
