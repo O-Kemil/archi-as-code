@@ -12,6 +12,9 @@ SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 Slug = Annotated[str, StringConstraints(pattern=SLUG_PATTERN)]
 """A kebab-case identifier, as defined in ADR-0001."""
 
+Text = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
+"""A required piece of text: surrounding whitespace is removed, empty is rejected."""
+
 
 class StrictModel(BaseModel):
     """Base class for every record model: unknown fields are rejected."""
@@ -86,3 +89,25 @@ class Dependency(StrictModel):
     application: Slug
     type: DependencyType
     description: str | None = None
+
+
+class ITComponentCategory(StrEnum):
+    """The three LeanIX meta model v3 subtypes (ADR-0001)."""
+
+    SOFTWARE = "software"
+    HARDWARE = "hardware"
+    SERVICE = "service"
+
+
+class ITComponent(StrictModel):
+    """A technology an application runs on, one record per version.
+
+    The rule "id equals the file name" is checked by the loader, which knows the path.
+    """
+
+    id: Slug
+    name: Text
+    category: ITComponentCategory
+    vendor: str | None = None
+    version: str | None = None
+    lifecycle: Lifecycle | None = None
