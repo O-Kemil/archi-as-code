@@ -13,7 +13,7 @@ Terms used in this ADR. A *record* is one YAML file describing one application o
 The record model is inspired by the public SAP LeanIX meta model. Verified in the SAP LeanIX documentation on 2026-10-03 (see Sources):
 
 - A lifecycle has five dated phases, stored as `plan`, `phaseIn`, `active`, `phaseOut`, `endOfLife`, and LeanIX itself exposes a derived `currentPhase` computed from those dates.
-- Business criticality has four levels: mission critical, business critical, business operational, administrative. The enumeration names used below follow the LeanIX API values as remembered (`administrativeService` for the fourth level); the labels were verified, the API spelling was not.
+- Business criticality has four levels: mission critical, business critical, business operational, administrative. The enumeration values used below are these labels in `snake_case`; `administrative_service` is this project's own name for the fourth level. The LeanIX API spelling of these values was not consulted and the project does not depend on it.
 - Applications are not linked directly. An Interface fact sheet connects a provider application and a consumer application and carries the data objects exchanged.
 - IT Component fact sheets have three subtypes in meta model v3: Software, Hardware, Service. Meta model v4 adds SaaS, PaaS, IaaS and AI Model.
 - LeanIX recommends modeling IT components as classes (for example "Oracle DB 11.2"), not as instances, and models application hosting at entry level with a tag group whose values are On-Prem, SaaS, PaaS, IaaS.
@@ -124,7 +124,7 @@ IT components are listed on the application side for the same reason: a shared c
 
 ### Deviation from LeanIX: direct dependencies instead of Interface records
 
-In LeanIX, an application-to-application link is an Interface fact sheet with its own lifecycle, provider, consumer and data objects. This ADR collapses it into a typed edge declared on the consumer. This is an assumed simplification: fine-grained data flows are out of scope (D6), and v1 needs the direction and the kind of coupling, not the content of the exchange. If interfaces become first-class later, each `depends_on` entry can be migrated to an Interface record without losing information.
+In LeanIX, an application-to-application link is an Interface fact sheet with its own lifecycle, provider, consumer and data objects. This ADR collapses it into a typed edge declared on the consumer. This is a deliberate simplification: fine-grained data flows are out of scope (D6), and v1 needs the direction and the kind of coupling, not the content of the exchange. If interfaces become first-class later, each `depends_on` entry can be migrated to an Interface record without losing information.
 
 ### Validation errors versus report anomalies
 
