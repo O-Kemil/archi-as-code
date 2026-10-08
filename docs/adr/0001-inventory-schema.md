@@ -135,7 +135,7 @@ The schema and the loader validate the form of the inventory. The report judges 
 | Unknown, missing or mistyped field; value outside an enumeration; malformed date | Application without `business_owner` |
 | `id` that does not match the file name; two records with the same `id` | IT component whose `end_of_life` is on or before the reference date |
 | Dependency on an application id that does not exist; reference to an IT component id that does not exist | Circular dependency between applications |
-| Application that depends on itself; the same dependency target listed twice | Later, without schema change: end of life before the migration deadline, application with no IT component |
+| Application that depends on itself; the same (target, type) pair listed twice (amended 2026-10-08, see Amendments) | Later, without schema change: end of life before the migration deadline, application with no IT component |
 | Lifecycle dates out of order; application lifecycle with no date | |
 
 ### Example records
@@ -209,6 +209,16 @@ Decided while coding the models, 2026-10-08. None of them changes what the table
 - Dates are validated in Pydantic lax mode: a native YAML date and the ISO text `"2015-03-01"` are both accepted.
 - Two lifecycle phases on the same day are accepted; only a later phase dated before an earlier one is rejected.
 - The derived status takes a mandatory reference date in the model. "Today by default" is supplied by the command line, so the model stays deterministic and testable.
+- The same IT component id listed twice in `it_components` is rejected, like a dependency link listed twice. Both are copy-paste mistakes rather than information.
+- A list field left without value (`depends_on:` or `it_components:` followed by nothing) is rejected, because YAML reads it as null, not as an empty list. Delete the line or write `depends_on: []`.
+
+## Amendments
+
+### 2026-10-08: several dependencies on the same application, with different types
+
+Replaces, in the table of the section "Validation errors versus report anomalies", the row "Application that depends on itself; the same dependency target listed twice" with: "Application that depends on itself; the same (target, type) pair listed twice".
+
+An application can call another one through an API and also send it a file. Rejecting the second link would force the inventory to hide a real coupling. Only the same pair of target and type is a duplicate. Consequence for the graph: one edge per pair of applications, carrying the list of dependency types as an attribute.
 
 ## Sources
 
