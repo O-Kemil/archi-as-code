@@ -7,10 +7,12 @@ import pytest
 from pydantic import ValidationError
 
 from archinv.loader import (
+    Inventory,
     InventoryError,
     RecordError,
     errors_from_pydantic,
     field_path,
+    load_inventory,
     load_record,
 )
 from archinv.models import Application, ITComponent
@@ -204,3 +206,148 @@ def test_checks_the_file_name_only_on_a_valid_record(tmp_path):
     file = write(tmp_path, "other.yaml", VALID_APPLICATION + "tags: [retail]\n")
     [error] = load_record(file, Application)
     assert error.field == "tags"
+
+
+# Step 3: directories, phase 2 and the entry point (ADR-0003, decisions 2, 4, 5, 6, 7).
+
+INVENTORY = Path(__file__).parent.parent / "inventory"
+
+
+def application_text(record_id, depends_on=(), it_components=()):
+    text = (
+        f"id: {record_id}\nname: {record_id}\ndescription: d\n"
+        "business_criticality: administrative_service\nhosting: cloud\n"
+        "lifecycle:\n  active: 2020-01-01\n"
+    )
+    if depends_on:
+        text += "depends_on:\n"
+        for target in depends_on:
+            text += f"  - application: {target}\n    type: api\n"
+    if it_components:
+        text += "it_components:\n" + "".join(f"  - {c}\n" for c in it_components)
+    return text
+
+
+def component_text(record_id):
+    return f"id: {record_id}\nname: {record_id}\ncategory: software\n"
+
+
+@pytest.fixture
+def root(tmp_path):
+    (tmp_path / "applications").mkdir()
+    (tmp_path / "it-components").mkdir()
+    return tmp_path
+
+
+def errors_of(root):
+    with pytest.raises(InventoryError) as error:
+        load_inventory(root)
+    return [str(e).replace(f"{root}/", "") for e in error.value.errors]
+
+
+def test_empty_directories_give_an_empty_inventory(root):
+    assert load_inventory(root) == Inventory({}, {})
+
+
+def test_reports_each_missing_directory(tmp_path):
+    assert errors_of(tmp_path) == [
+        "applications: directory not found",
+        "it-components: directory not found",
+    ]
+
+
+def test_records_are_indexed_by_id_in_file_name_order(root):
+    write(root / "applications", "zeta.yaml", application_text("zeta"))
+    write(root / "applications", "alpha.yaml", application_text("alpha"))
+    assert list(load_inventory(root).applications) == ["alpha", "zeta"]
+
+
+def test_reports_a_yml_file_and_says_what_to_do(root):
+    write(root / "applications", "pos-stores.yml", application_text("pos-stores"))
+    assert errors_of(root) == ["applications/pos-stores.yml: use the .yaml extension"]
+
+
+@pytest.mark.parametrize("name", ["notes.txt", "pos-stores.yaml.bak"])
+def test_reports_a_file_that_is_not_a_record(root, name):
+    write(root / "applications", name, "")
+    assert errors_of(root) == [
+        f"applications/{name}: not a record file: only .yaml files are read here"
+    ]
+
+
+def test_reports_a_subdirectory(root):
+    (root / "applications" / "archive").mkdir()
+    assert errors_of(root) == [
+        "applications/archive: not a record file: only .yaml files are read here"
+    ]
+
+
+def test_ignores_hidden_files(root):
+    write(root / "applications", ".gitkeep", "")
+    write(root / "it-components", ".DS_Store", "")
+    assert load_inventory(root) == Inventory({}, {})
+
+
+def test_collects_record_errors_from_both_directories(root):
+    write(root / "applications", "a.yaml", "")
+    write(root / "it-components", "c.yaml", component_text("wrong"))
+    assert errors_of(root) == [
+        "applications/a.yaml: the file is empty",
+        "it-components/c.yaml: id: 'wrong' does not match the file name 'c'",
+    ]
+
+
+def test_skips_reference_checks_when_a_record_is_invalid(root):
+    write(root / "applications", "a.yaml", application_text("a", depends_on=["ghost"]))
+    write(root / "it-components", "c.yaml", "")
+    assert errors_of(root) == ["it-components/c.yaml: the file is empty"]
+
+
+def test_reports_an_unknown_dependency_target(root):
+    write(
+        root / "applications",
+        "a.yaml",
+        application_text("a", depends_on=["b", "ghost"]),
+    )
+    write(root / "applications", "b.yaml", application_text("b"))
+    assert errors_of(root) == [
+        (
+            "applications/a.yaml: depends_on[1].application: "
+            "unknown application 'ghost': there is no applications/ghost.yaml"
+        )
+    ]
+
+
+def test_reports_an_unknown_it_component(root):
+    write(
+        root / "applications", "a.yaml", application_text("a", it_components=["nope"])
+    )
+    assert errors_of(root) == [
+        (
+            "applications/a.yaml: it_components[0]: "
+            "unknown IT component 'nope': there is no it-components/nope.yaml"
+        )
+    ]
+
+
+def test_reports_an_id_shared_by_an_application_and_a_component(root):
+    write(root / "applications", "erp.yaml", application_text("erp"))
+    write(root / "it-components", "erp.yaml", component_text("erp"))
+    assert errors_of(root) == [
+        "it-components/erp.yaml: id: 'erp' is also the id of an application"
+    ]
+
+
+def test_loads_a_valid_inventory_with_references(root):
+    write(root / "applications", "a.yaml", application_text("a", ["b"], ["db"]))
+    write(root / "applications", "b.yaml", application_text("b"))
+    write(root / "it-components", "db.yaml", component_text("db"))
+    inventory = load_inventory(root)
+    assert inventory.applications["a"].depends_on[0].application == "b"
+    assert list(inventory.it_components) == ["db"]
+
+
+def test_the_real_inventory_loads_without_the_templates():
+    inventory = load_inventory(INVENTORY)
+    assert "application" not in inventory.applications
+    assert "it-component" not in inventory.it_components

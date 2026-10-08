@@ -128,3 +128,104 @@ def load_record(
         message = f"'{record.id}' does not match the file name '{file.stem}'"
         return [RecordError(file, "id", message)]
     return record
+
+
+APPLICATIONS_DIR = "applications"
+IT_COMPONENTS_DIR = "it-components"
+RECORD_SUFFIX = ".yaml"
+
+
+@dataclass(frozen=True)
+class Inventory:
+    """The loaded inventory, records indexed by id in file name order (ADR-0003, decision 7)."""
+
+    applications: dict[str, Application]
+    it_components: dict[str, ITComponent]
+
+
+def record_files(directory: Path) -> tuple[list[Path], list[RecordError]]:
+    """List the record files of a directory, sorted by name (ADR-0003, decision 5)."""
+    if not directory.is_dir():
+        return [], [RecordError(directory, "", "directory not found")]
+    files: list[Path] = []
+    errors: list[RecordError] = []
+    for path in sorted(directory.iterdir()):
+        if path.name.startswith("."):
+            continue
+        if path.is_file() and path.suffix == RECORD_SUFFIX:
+            files.append(path)
+        elif path.suffix == ".yml":
+            errors.append(RecordError(path, "", "use the .yaml extension"))
+        else:
+            errors.append(
+                RecordError(
+                    path, "", "not a record file: only .yaml files are read here"
+                )
+            )
+    return files, errors
+
+
+def load_records(
+    directory: Path, model: type[Application] | type[ITComponent]
+) -> tuple[dict, list[RecordError]]:
+    """Phase 1 over a directory: every file is read, every error is kept."""
+    files, errors = record_files(directory)
+    records = {}
+    for file in files:
+        result = load_record(file, model)
+        if isinstance(result, list):
+            errors.extend(result)
+        else:
+            records[result.id] = result
+    return records, errors
+
+
+def record_file(root: Path, directory: str, record_id: str) -> Path:
+    """The file of a loaded record: id equals the file name (ADR-0001)."""
+    return root / directory / f"{record_id}{RECORD_SUFFIX}"
+
+
+def check_references(
+    root: Path,
+    applications: dict[str, Application],
+    it_components: dict[str, ITComponent],
+) -> list[RecordError]:
+    """Phase 2: ids unique across kinds, every target exists (ADR-0003, decision 4)."""
+    errors = []
+    for shared in sorted(applications.keys() & it_components.keys()):
+        file = record_file(root, IT_COMPONENTS_DIR, shared)
+        errors.append(
+            RecordError(file, "id", f"'{shared}' is also the id of an application")
+        )
+    for application in applications.values():
+        file = record_file(root, APPLICATIONS_DIR, application.id)
+        for index, dependency in enumerate(application.depends_on):
+            target = dependency.application
+            if target not in applications:
+                message = (
+                    f"unknown application '{target}': "
+                    f"there is no {APPLICATIONS_DIR}/{target}{RECORD_SUFFIX}"
+                )
+                errors.append(
+                    RecordError(file, f"depends_on[{index}].application", message)
+                )
+        for index, component in enumerate(application.it_components):
+            if component not in it_components:
+                message = (
+                    f"unknown IT component '{component}': "
+                    f"there is no {IT_COMPONENTS_DIR}/{component}{RECORD_SUFFIX}"
+                )
+                errors.append(RecordError(file, f"it_components[{index}]", message))
+    return errors
+
+
+def load_inventory(root: Path) -> Inventory:
+    """Load inventory/ or raise InventoryError with every error found (ADR-0003)."""
+    applications, errors = load_records(root / APPLICATIONS_DIR, Application)
+    it_components, more_errors = load_records(root / IT_COMPONENTS_DIR, ITComponent)
+    errors.extend(more_errors)
+    if not errors:
+        errors = check_references(root, applications, it_components)
+    if errors:
+        raise InventoryError(errors)
+    return Inventory(applications, it_components)
