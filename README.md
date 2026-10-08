@@ -47,6 +47,7 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 - [ADR-0001: Inventory schema for applications and IT components](docs/adr/0001-inventory-schema.md), accepted 2026-10-03.
 - [ADR-0002: Tooling for environment, dependencies, tests and lint](docs/adr/0002-tooling.md), accepted 2026-10-05.
+- [ADR-0003: Inventory loader and validation errors](docs/adr/0003-inventory-loader.md), accepted 2026-10-08.
 
 ## Limits
 
@@ -57,4 +58,4 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 ## Status
 
-Scoping done. Inventory schema (ADR-0001) and tooling (ADR-0002) decided. Next: Pydantic models.
+Scoping done. Inventory schema (ADR-0001), tooling (ADR-0002) and loader design (ADR-0003) decided. Pydantic models done (106 tests). Next: the loader.
