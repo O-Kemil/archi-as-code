@@ -40,11 +40,15 @@ lifecycle:
 # type: one of api (synchronous call), file (file transfer or batch),
 #   database (direct access to the other application's database), event (message or queue).
 # description: optional.
+# Delete the whole block if there is none, or write "depends_on: []".
+# A "depends_on:" line left without value is rejected.
 depends_on:
   - application: other-application
     type: api
     description: Replace with what this dependency is used for.
 
 # optional. Ids of existing records under inventory/it-components/.
+# Delete the whole block if there is none, or write "it_components: []".
+# An "it_components:" line left without value is rejected.
 it_components:
   - it-component

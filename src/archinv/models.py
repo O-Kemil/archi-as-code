@@ -5,7 +5,14 @@ from enum import StrEnum
 from itertools import pairwise
 from typing import Annotated, Self
 
-from pydantic import BaseModel, ConfigDict, StringConstraints, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    StringConstraints,
+    ValidationInfo,
+    field_validator,
+    model_validator,
+)
 
 SLUG_PATTERN = r"^[a-z0-9]+(-[a-z0-9]+)*$"
 
@@ -111,3 +118,75 @@ class ITComponent(StrictModel):
     vendor: str | None = None
     version: str | None = None
     lifecycle: Lifecycle | None = None
+
+
+class BusinessCriticality(StrEnum):
+    """How much the business suffers if the application stops (LeanIX levels)."""
+
+    MISSION_CRITICAL = "mission_critical"
+    BUSINESS_CRITICAL = "business_critical"
+    BUSINESS_OPERATIONAL = "business_operational"
+    ADMINISTRATIVE_SERVICE = "administrative_service"
+
+
+class Hosting(StrEnum):
+    """Where the application runs (ADR-0001, secondary choices)."""
+
+    DATA_CENTER = "data_center"
+    CLOUD = "cloud"
+    SAAS = "saas"
+    STORE = "store"
+
+
+class Application(StrictModel):
+    """An application of the portfolio.
+
+    The rule "id equals the file name" and the existence of the ids listed in
+    depends_on and it_components are checked by the loader.
+    """
+
+    id: Slug
+    name: Text
+    description: Text
+    business_owner: str | None = None
+    technical_owner: str | None = None
+    business_criticality: BusinessCriticality
+    hosting: Hosting
+    lifecycle: Lifecycle
+    depends_on: list[Dependency] = []
+    it_components: list[Slug] = []
+
+    @field_validator("lifecycle")
+    @classmethod
+    def check_at_least_one_date(cls, lifecycle: Lifecycle) -> Lifecycle:
+        if not lifecycle.dated_phases():
+            raise ValueError("an application lifecycle needs at least one date")
+        return lifecycle
+
+    @field_validator("depends_on")
+    @classmethod
+    def check_targets(
+        cls, dependencies: list[Dependency], info: ValidationInfo
+    ) -> list[Dependency]:
+        # Several links to the same application are allowed when their types differ
+        # (ADR-0001, amendment of 2026-10-08). The same (target, type) pair is not.
+        seen = set()
+        for dependency in dependencies:
+            target = dependency.application
+            if target == info.data.get("id"):
+                raise ValueError(f"{target} depends on itself")
+            link = (target, dependency.type)
+            if link in seen:
+                raise ValueError(f"{target} ({dependency.type.value}) is listed twice")
+            seen.add(link)
+        return dependencies
+
+    @field_validator("it_components")
+    @classmethod
+    def check_no_duplicate_component(cls, components: list[str]) -> list[str]:
+        seen = set()
+        for component in components:
+            if component in seen:
+                raise ValueError(f"{component} is listed twice")
+            seen.add(component)
+        return components
