@@ -200,6 +200,16 @@ Follow-up:
 - Whether `generated/` is committed is a separate ADR (open question in the scoping note).
 - Commented record templates live in `inventory/templates/`. The loader must not load them as records, and a test must check that they stay valid against the schema as soon as the Pydantic code exists.
 
+## Clarifications
+
+Decided while coding the models, 2026-10-08. None of them changes what the tables above say; they settle what the tables left open.
+
+- Required text fields (`name`, `description`) reject an empty string and a string made of spaces only. Surrounding whitespace is removed at validation. Optional text fields are accepted as written.
+- Numbers are not converted to text. `version: 1.0` without quotes is read by YAML as a number and rejected; it must be written `version: "1.0"`. Converting silently would turn `1.10` into `1.1`.
+- Dates are validated in Pydantic lax mode: a native YAML date and the ISO text `"2015-03-01"` are both accepted.
+- Two lifecycle phases on the same day are accepted; only a later phase dated before an earlier one is rejected.
+- The derived status takes a mandatory reference date in the model. "Today by default" is supplied by the command line, so the model stays deterministic and testable.
+
 ## Sources
 
 Consulted on 2026-10-03.
