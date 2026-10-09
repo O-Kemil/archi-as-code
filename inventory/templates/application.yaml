@@ -35,7 +35,9 @@ lifecycle:
   phase_out: 2027-06-30
   end_of_life: 2027-12-31
 
-# optional. Applications this one needs to work, declared from the consumer side.
+# optional. Applications this one needs to work. Declare the link on the side that
+# triggers the exchange: the application that calls, sends, fetches the file or
+# subscribes to the events.
 # application: id of an existing record under inventory/applications/.
 # type: one of api (synchronous call), file (file transfer or batch),
 #   database (direct access to the other application's database), event (message or queue).

@@ -173,7 +173,7 @@ vendor: Oracle
 version: "11.2"
 lifecycle:
   active: 2009-09-01
-  end_of_life: 2020-12-31
+  end_of_life: 2015-01-31
 ```
 
 ## Consequences
@@ -211,6 +211,11 @@ Decided while coding the models, 2026-10-08. None of them changes what the table
 - The derived status takes a mandatory reference date in the model. "Today by default" is supplied by the command line, so the model stays deterministic and testable.
 - The same IT component id listed twice in `it_components` is rejected, like a dependency link listed twice. Both are copy-paste mistakes rather than information.
 - A list field left without value (`depends_on:` or `it_components:` followed by nothing) is rejected, because YAML reads it as null, not as an empty list. Delete the line or write `depends_on: []`.
+
+Decided while writing the sample records, 2026-10-09:
+
+- A dependency is declared by the application that triggers the exchange: the one that calls the API, sends or fetches the file, or subscribes to the events. The example below follows this rule: the point of sale sends its sales export, so it declares the link to the ERP.
+- For an IT component, `end_of_life` is the date after which the vendor delivers no security fixes without a separately purchased extension. Microsoft Extended Security Updates, Red Hat Extended Life Cycle Support and Oracle Extended Support are excluded. `active` is the general availability date. The source and the date it was consulted go in a comment at the top of the record.
 
 ## Amendments
 
