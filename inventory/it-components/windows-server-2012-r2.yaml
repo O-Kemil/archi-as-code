@@ -1,0 +1,10 @@
+# Source: https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2012-r2, consulted 2026-10-09.
+# end_of_life is the Extended End Date; Extended Security Updates (paid) are excluded.
+id: windows-server-2012-r2
+name: Windows Server 2012 R2
+category: software
+vendor: Microsoft
+version: "6.3"
+lifecycle:
+  active: 2013-11-25
+  end_of_life: 2023-10-10

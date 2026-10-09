@@ -1,0 +1,12 @@
+# Source: Oracle Lifetime Support Policy, Oracle Technology Products (effective 2026-10-02), p. 6,
+# https://www.oracle.com/us/support/library/lifetime-support-technology-069183.pdf, consulted 2026-10-09.
+# end_of_life is the end of Premier Support; Extended Support (paid) is excluded.
+# Oracle gives months only: first day for active, last day for end_of_life.
+id: oracle-database-11g
+name: Oracle Database 11g Release 2
+category: software
+vendor: Oracle
+version: "11.2"
+lifecycle:
+  active: 2009-09-01
+  end_of_life: 2015-01-31

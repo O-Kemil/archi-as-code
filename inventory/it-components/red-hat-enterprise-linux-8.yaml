@@ -1,0 +1,12 @@
+# Source: Red Hat Enterprise Linux Life Cycle, https://access.redhat.com/support/policy/updates/errata,
+# dates read from the Product Life Cycles API (https://access.redhat.com/product-life-cycles/api/v1/products),
+# consulted 2026-10-09.
+# end_of_life is the end of Maintenance Support; Extended Life Cycle Support (paid add-on) is excluded.
+id: red-hat-enterprise-linux-8
+name: Red Hat Enterprise Linux 8
+category: software
+vendor: Red Hat
+version: "8"
+lifecycle:
+  active: 2019-05-07
+  end_of_life: 2029-05-31

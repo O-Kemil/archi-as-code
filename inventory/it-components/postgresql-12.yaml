@@ -1,0 +1,10 @@
+# Source: https://www.postgresql.org/support/versioning/, consulted 2026-10-09.
+# end_of_life is the final release date of the major version.
+id: postgresql-12
+name: PostgreSQL 12
+category: software
+vendor: PostgreSQL Global Development Group
+version: "12"
+lifecycle:
+  active: 2019-10-03
+  end_of_life: 2024-11-21
