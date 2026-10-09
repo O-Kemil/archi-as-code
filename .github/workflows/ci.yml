@@ -1,8 +1,9 @@
-# Continuous integration: lint, format check, tests and inventory validation
-# on every push and pull request. Tooling: ADR-0002. Exit statuses of
-# "archinv validate": ADR-0004. Actions are pinned by commit SHA, with the
-# release tag in a comment; updates are manual (see README, "Continuous
-# integration").
+# Continuous integration: lint, format check, inventory validation and tests
+# on every push and pull request. The inventory is validated before the tests
+# because one test loads the real inventory/ and would fail with a traceback.
+# Tooling: ADR-0002. Exit statuses of "archinv validate": ADR-0004. Actions
+# and the runner image are pinned; updates are manual (see README,
+# "Continuous integration").
 
 name: CI
 
@@ -15,7 +16,7 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -37,8 +38,8 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check .
 
-      - name: Test
-        run: uv run pytest
-
       - name: Validate the inventory
         run: uv run archinv validate
+
+      - name: Test
+        run: uv run pytest

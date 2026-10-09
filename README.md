@@ -45,11 +45,11 @@ Keep the clone outside a synchronised folder such as iCloud Drive. Observed on m
 
 ## Continuous integration
 
-GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request: `ruff check`, `ruff format --check`, `pytest`, then `archinv validate`. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
+GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request: `ruff check`, `ruff format --check`, `archinv validate`, then `pytest`. The inventory is validated before the tests so that an invalid record shows up as a clear error line rather than as a failing test. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
 
 The workflow installs the uv version pinned in the file and the Python version pinned in `.python-version`, then `uv sync --locked`, which fails if `pyproject.toml` changed without `uv.lock` being regenerated.
 
-Third-party actions are pinned by commit SHA, with the release tag in a comment, so that a moved tag cannot change what the CI runs. Updating them is manual: look up the new release, replace the SHA and the comment. Dependabot can automate this later.
+Third-party actions are pinned by commit SHA, with the release tag in a comment, so that a moved tag cannot change what the CI runs. The runner image is pinned too (`ubuntu-24.04`). Updating them is manual: look up the new release or image, replace the SHA and the comment or the image name. Dependabot can automate the actions part later.
 
 ## Repository layout
 
