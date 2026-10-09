@@ -29,7 +29,19 @@ The demonstration scenario (a fictional fashion retailer leaving its data center
 
 ## Getting started
 
-_To be written once the first command works._
+Requirements: git and [uv](https://docs.astral.sh/uv/getting-started/installation/). uv installs the Python version pinned in `.python-version` by itself.
+
+```sh
+git clone https://github.com/O-Kemil/archi-as-code.git
+cd archi-as-code
+uv sync                   # creates .venv with the exact versions of uv.lock
+uv run archinv validate   # checks every record under inventory/
+uv run pytest             # runs the tests
+```
+
+`archinv validate` prints `Inventory valid: ...` and exits with status 0, or prints one line per error, with the file and the field, and exits with status 1 (ADR-0004).
+
+Keep the clone outside a synchronised folder such as iCloud Drive. Observed on macOS: files in `.venv` ended up flagged as hidden, and Python 3.13 skips a hidden `.pth` file, so `archinv` could no longer be imported.
 
 ## Continuous integration
 
