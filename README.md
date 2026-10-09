@@ -69,6 +69,7 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 - [ADR-0002: Tooling for environment, dependencies, tests and lint](docs/adr/0002-tooling.md), accepted 2026-10-05.
 - [ADR-0003: Inventory loader and validation errors](docs/adr/0003-inventory-loader.md), accepted 2026-10-08.
 - [ADR-0004: Command line interface](docs/adr/0004-command-line.md), accepted 2026-10-09.
+- [ADR-0005: Dependency graph model](docs/adr/0005-dependency-graph.md), accepted 2026-10-09.
 
 ## Limits
 
