@@ -1,2 +1,1 @@
-def main() -> None:
-    print("Hello from archinv!")
+"""Application inventory as code."""

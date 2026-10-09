@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-archinv = "archinv:main"
+archinv = "archinv.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.12.23,<0.13.0"]
