@@ -31,6 +31,14 @@ The demonstration scenario (a fictional fashion retailer leaving its data center
 
 _To be written once the first command works._
 
+## Continuous integration
+
+GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request: `ruff check`, `ruff format --check`, `pytest`, then `archinv validate`. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
+
+The workflow installs the uv version pinned in the file and the Python version pinned in `.python-version`, then `uv sync --locked`, which fails if `pyproject.toml` changed without `uv.lock` being regenerated.
+
+Third-party actions are pinned by commit SHA, with the release tag in a comment, so that a moved tag cannot change what the CI runs. Updating them is manual: look up the new release, replace the SHA and the comment. Dependabot can automate this later.
+
 ## Repository layout
 
 | Path | Content |
@@ -59,4 +67,4 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 ## Status
 
-Scoping done. Inventory schema (ADR-0001), tooling (ADR-0002) and loader design (ADR-0003) decided. Pydantic models done (106 tests). Next: the loader.
+Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. Next: the hand-written sample records.
