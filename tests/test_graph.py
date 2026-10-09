@@ -11,7 +11,11 @@ from archinv.graph import (
     IT_COMPONENT,
     RUNS_ON,
     application_graph,
+    applications_using,
     build_graph,
+    dependents,
+    dependents_count,
+    impacted_by,
 )
 from archinv.loader import Inventory, load_inventory
 from archinv.models import Application, DependencyType, ITComponent
@@ -38,7 +42,8 @@ def component(record_id):
 
 @pytest.fixture
 def inventory():
-    # a depends on b twice (file declared before api) and on c; a and b run on db.
+    # a depends on b twice (file declared before api) and on c; d depends on a;
+    # a and b run on db.
     apps = [
         application(
             "a",
@@ -47,6 +52,7 @@ def inventory():
         ),
         application("b", it_components=["db"]),
         application("c"),
+        application("d", depends_on=[("a", "event")]),
     ]
     return Inventory({app.id: app for app in apps}, {"db": component("db")})
 
@@ -57,6 +63,7 @@ def test_one_node_per_record_with_its_kind(inventory):
         "a": APPLICATION,
         "b": APPLICATION,
         "c": APPLICATION,
+        "d": APPLICATION,
         "db": IT_COMPONENT,
     }
 
@@ -94,8 +101,8 @@ def test_runs_on_edge_per_component(inventory):
 
 
 def test_edge_count(inventory):
-    # a->b, a->c (depends_on) and a->db, b->db (runs_on)
-    assert build_graph(inventory).number_of_edges() == 4
+    # a->b, a->c, d->a (depends_on) and a->db, b->db (runs_on)
+    assert build_graph(inventory).number_of_edges() == 5
 
 
 def test_empty_inventory_gives_an_empty_graph():
@@ -105,7 +112,7 @@ def test_empty_inventory_gives_an_empty_graph():
 
 def test_application_graph_keeps_applications_and_depends_on_only(inventory):
     view = application_graph(build_graph(inventory))
-    assert sorted(view.nodes) == ["a", "b", "c"]
+    assert sorted(view.nodes) == ["a", "b", "c", "d"]
     assert {kind for _, _, kind in view.edges(data="kind")} == {DEPENDS_ON}
 
 
@@ -125,3 +132,68 @@ def test_the_real_inventory_builds_as_expected():
         DependencyType.API,
         DependencyType.FILE,
     ]
+
+
+# Step 2: queries and dependents count (ADR-0005, decision 2).
+
+
+def test_dependents_are_the_direct_predecessors(inventory):
+    graph = build_graph(inventory)
+    assert dependents(graph, "b") == ["a"]
+    assert dependents(graph, "a") == ["d"]
+    assert dependents(graph, "d") == []
+
+
+def test_applications_using_a_component(inventory):
+    assert applications_using(build_graph(inventory), "db") == ["a", "b"]
+
+
+def test_impacted_by_follows_the_cascade(inventory):
+    graph = build_graph(inventory)
+    assert impacted_by(graph, "b") == ["a", "d"]
+    assert impacted_by(graph, "d") == []
+
+
+def test_impacted_by_a_component_includes_the_cascade(inventory):
+    assert impacted_by(build_graph(inventory), "db") == ["a", "b", "d"]
+
+
+def test_impacted_by_excludes_the_node_itself_inside_a_cycle():
+    apps = [
+        application("x", depends_on=[("y", "api")]),
+        application("y", depends_on=[("x", "api")]),
+    ]
+    graph = build_graph(Inventory({app.id: app for app in apps}, {}))
+    assert impacted_by(graph, "x") == ["y"]
+
+
+def test_dependents_count_per_application_in_id_order(inventory):
+    assert dependents_count(build_graph(inventory)) == {"a": 1, "b": 1, "c": 1, "d": 0}
+
+
+def test_dependents_count_ignores_components(inventory):
+    assert "db" not in dependents_count(build_graph(inventory))
+
+
+@pytest.mark.parametrize("query", [dependents, applications_using, impacted_by])
+def test_unknown_node_raises(inventory, query):
+    with pytest.raises(nx.NetworkXError, match="not in the digraph"):
+        query(build_graph(inventory), "nope")
+
+
+def test_real_inventory_queries():
+    graph = build_graph(load_inventory(INVENTORY))
+    assert dependents(graph, "erp-finance") == [
+        "data-warehouse",
+        "hr-payroll",
+        "pos-stores",
+        "product-catalog",
+        "supplier-portal",
+        "warehouse-management",
+    ]
+    assert applications_using(graph, "postgresql-15") == [
+        "ecommerce-site",
+        "order-management",
+        "supplier-portal",
+    ]
+    assert "bi-reporting" in impacted_by(graph, "store-inventory")

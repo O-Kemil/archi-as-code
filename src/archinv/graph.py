@@ -48,3 +48,26 @@ def application_graph(graph: nx.DiGraph) -> nx.DiGraph:
         node for node, kind in graph.nodes(data="kind") if kind == APPLICATION
     ]
     return graph.subgraph(applications)
+
+
+def dependents(graph: nx.DiGraph, application_id: str) -> list[str]:
+    """Applications that depend directly on this one, sorted by id."""
+    return sorted(graph.predecessors(application_id))
+
+
+def applications_using(graph: nx.DiGraph, component_id: str) -> list[str]:
+    """Applications that run on this IT component, sorted by id."""
+    return sorted(graph.predecessors(component_id))
+
+
+def impacted_by(graph: nx.DiGraph, node_id: str) -> list[str]:
+    """Applications that depend on this node directly or in cascade, sorted by id.
+
+    Follows the declared direction of the links (ADR-0005, accepted limit).
+    """
+    return sorted(nx.ancestors(graph, node_id))
+
+
+def dependents_count(graph: nx.DiGraph) -> dict[str, int]:
+    """Number of direct dependents of each application, keyed by id in id order."""
+    return dict(sorted(application_graph(graph).in_degree))
