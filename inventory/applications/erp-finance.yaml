@@ -1,0 +1,12 @@
+id: erp-finance
+name: ERP finance
+description: General accounting, purchasing and supplier invoices.
+business_owner: Finance
+technical_owner: ERP team
+business_criticality: mission_critical
+hosting: data_center
+lifecycle:
+  active: 2013-09-01
+it_components:
+  - oracle-database-19c
+  - red-hat-enterprise-linux-8

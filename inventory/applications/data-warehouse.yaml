@@ -1,0 +1,25 @@
+id: data-warehouse
+name: Data warehouse
+description: Central store of sales, orders and finance data for analysis.
+business_owner: Data office
+technical_owner: Data engineering team
+business_criticality: business_operational
+hosting: data_center
+lifecycle:
+  active: 2016-05-01
+depends_on:
+  - application: erp-finance
+    type: database
+    description: Nightly direct read of the accounting tables.
+  - application: order-management
+    type: file
+    description: Daily export of orders.
+  - application: pos-stores
+    type: file
+    description: Daily collection of the store sales files.
+  - application: loyalty-crm
+    type: api
+    description: Daily extraction of customers and loyalty events.
+it_components:
+  - sql-server-2014
+  - windows-server-2016

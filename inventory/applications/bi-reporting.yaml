@@ -1,0 +1,14 @@
+id: bi-reporting
+name: BI reporting
+description: Dashboards for management and store managers.
+technical_owner: Data engineering team
+business_criticality: administrative_service
+hosting: data_center
+lifecycle:
+  active: 2017-02-01
+depends_on:
+  - application: data-warehouse
+    type: database
+    description: Direct queries on the warehouse database.
+it_components:
+  - windows-server-2016

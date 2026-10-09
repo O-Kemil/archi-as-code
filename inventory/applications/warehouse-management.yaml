@@ -1,0 +1,22 @@
+id: warehouse-management
+name: Warehouse management
+description: Receiving, storage and picking in the central warehouse.
+business_owner: Logistics
+technical_owner: Logistics IT team
+business_criticality: business_critical
+hosting: data_center
+lifecycle:
+  active: 2011-10-01
+depends_on:
+  - application: order-management
+    type: api
+    description: Fetches the orders to prepare.
+  - application: transport-management
+    type: api
+    description: Carrier booking and shipping labels.
+  - application: erp-finance
+    type: file
+    description: Weekly export of stock valuation.
+it_components:
+  - oracle-database-11g
+  - red-hat-enterprise-linux-7

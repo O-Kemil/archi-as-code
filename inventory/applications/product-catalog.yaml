@@ -1,0 +1,16 @@
+id: product-catalog
+name: Product catalog
+description: Reference data for products, prices and assortments.
+business_owner: Merchandising
+technical_owner: Merchandising IT team
+business_criticality: business_critical
+hosting: data_center
+lifecycle:
+  active: 2014-01-20
+depends_on:
+  - application: erp-finance
+    type: file
+    description: Daily import of purchase prices and suppliers.
+it_components:
+  - postgresql-12
+  - red-hat-enterprise-linux-7

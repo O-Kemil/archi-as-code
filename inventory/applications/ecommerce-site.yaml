@@ -1,0 +1,24 @@
+id: ecommerce-site
+name: E-commerce site
+description: Online store of Maison Zola.
+business_owner: E-commerce
+technical_owner: E-commerce IT team
+business_criticality: mission_critical
+hosting: cloud
+lifecycle:
+  active: 2019-06-01
+depends_on:
+  - application: order-management
+    type: api
+    description: Order creation and order status.
+  - application: product-catalog
+    type: api
+    description: Products, prices and availability.
+  - application: payment-gateway
+    type: api
+    description: Online payment authorisation.
+  - application: loyalty-crm
+    type: api
+    description: Customer account and loyalty balance.
+it_components:
+  - postgresql-15

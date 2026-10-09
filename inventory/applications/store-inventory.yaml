@@ -1,0 +1,19 @@
+id: store-inventory
+name: Store inventory
+description: Stock levels and stock movements of every store.
+business_owner: Supply chain
+technical_owner: Supply chain IT team
+business_criticality: business_critical
+hosting: data_center
+lifecycle:
+  active: 2018-04-01
+depends_on:
+  - application: warehouse-management
+    type: event
+    description: Subscribes to shipment and receipt events from the warehouse.
+  - application: product-catalog
+    type: api
+    description: Product reference data.
+it_components:
+  - oracle-database-19c
+  - red-hat-enterprise-linux-8

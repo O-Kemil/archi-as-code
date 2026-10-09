@@ -1,0 +1,13 @@
+id: hr-payroll
+name: HR and payroll
+description: Employee records and payroll, as a service.
+business_owner: Human resources
+technical_owner: HR IT team
+business_criticality: business_critical
+hosting: saas
+lifecycle:
+  active: 2022-01-01
+depends_on:
+  - application: erp-finance
+    type: file
+    description: Monthly export of payroll accounting entries.

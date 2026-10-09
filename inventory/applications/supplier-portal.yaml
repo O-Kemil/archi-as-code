@@ -1,0 +1,24 @@
+id: supplier-portal
+name: Supplier portal
+description: Lets suppliers see purchase orders and upload their invoices.
+business_owner: Purchasing
+technical_owner: ERP team
+business_criticality: business_operational
+hosting: cloud
+lifecycle:
+  plan: 2026-03-01
+  phase_in: 2026-09-15
+  active: 2027-01-15
+depends_on:
+  - application: erp-finance
+    type: api
+    description: Purchase orders and their status.
+  - application: erp-finance
+    type: file
+    description: Nightly batch upload of supplier invoices.
+  - application: product-catalog
+    type: api
+    description: Product reference data for the supplier's items.
+it_components:
+  - postgresql-15
+  - red-hat-enterprise-linux-8

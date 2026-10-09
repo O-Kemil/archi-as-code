@@ -1,0 +1,25 @@
+id: order-management
+name: Order management
+description: Takes, allocates and follows customer orders from every sales channel.
+business_owner: E-commerce
+technical_owner: E-commerce IT team
+business_criticality: mission_critical
+hosting: data_center
+lifecycle:
+  active: 2020-09-01
+depends_on:
+  - application: store-inventory
+    type: api
+    description: Stock availability for allocation and click and collect.
+  - application: product-catalog
+    type: api
+    description: Product and price reference data.
+  - application: payment-gateway
+    type: api
+    description: Payment capture when the order ships.
+  - application: loyalty-crm
+    type: api
+    description: Customer identification and loyalty points.
+it_components:
+  - postgresql-15
+  - red-hat-enterprise-linux-8

@@ -1,0 +1,16 @@
+id: price-label-printing
+name: Price label printing
+description: Prints shelf price labels for the stores.
+technical_owner: Store IT team
+business_criticality: business_operational
+hosting: data_center
+lifecycle:
+  active: 2012-05-01
+  phase_out: 2027-03-31
+  end_of_life: 2027-12-31
+depends_on:
+  - application: product-catalog
+    type: file
+    description: Daily price file.
+it_components:
+  - windows-server-2012-r2

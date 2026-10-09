@@ -1,0 +1,11 @@
+id: transport-management
+name: Transport management
+description: Carrier selection and delivery planning, as a service.
+business_owner: Logistics
+technical_owner: Logistics IT team
+business_criticality: business_operational
+hosting: saas
+lifecycle:
+  plan: 2026-01-15
+  phase_in: 2026-06-01
+  active: 2026-11-02

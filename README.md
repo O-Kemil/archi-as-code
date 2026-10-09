@@ -79,4 +79,4 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 ## Status
 
-Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. Next: the hand-written sample records.
+Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. The 24 curated records of the Maison Zola data set (15 applications, 9 IT components) are in `inventory/`. Next: the dependency graph.

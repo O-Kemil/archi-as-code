@@ -1,0 +1,27 @@
+id: pos-stores
+name: Point of sale
+description: Cash register software used in every store, with a local server per store.
+business_owner: Retail operations
+technical_owner: Store IT team
+business_criticality: mission_critical
+hosting: store
+lifecycle:
+  active: 2015-03-01
+  phase_out: 2027-09-30
+  end_of_life: 2028-03-31
+depends_on:
+  - application: store-inventory
+    type: api
+    description: Stock lookup at checkout.
+  - application: loyalty-crm
+    type: api
+    description: Loyalty card identification and points at checkout.
+  - application: product-catalog
+    type: file
+    description: Daily import of products and prices.
+  - application: erp-finance
+    type: file
+    description: Nightly export of sales and payments.
+it_components:
+  - windows-server-2012-r2
+  - sql-server-2014

@@ -1,0 +1,9 @@
+id: loyalty-crm
+name: Loyalty CRM
+description: Customer database and loyalty programme, as a service.
+business_owner: Marketing
+technical_owner: Marketing IT team
+business_criticality: business_critical
+hosting: saas
+lifecycle:
+  active: 2021-03-15

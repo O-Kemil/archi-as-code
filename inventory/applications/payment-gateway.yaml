@@ -1,0 +1,9 @@
+id: payment-gateway
+name: Payment gateway
+description: Online payment authorisation and capture, as a service.
+business_owner: Finance
+technical_owner: E-commerce IT team
+business_criticality: mission_critical
+hosting: saas
+lifecycle:
+  active: 2019-06-01
