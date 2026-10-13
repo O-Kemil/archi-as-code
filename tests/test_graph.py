@@ -19,30 +19,14 @@ from archinv.graph import (
     impacted_by,
 )
 from archinv.loader import Inventory, load_inventory
-from archinv.models import Application, DependencyType, ITComponent
+from archinv.models import DependencyType
 
 INVENTORY = Path(__file__).parent.parent / "inventory"
 
 
-def application(record_id, depends_on=(), it_components=()):
-    return Application(
-        id=record_id,
-        name=record_id,
-        description="d",
-        business_criticality="administrative_service",
-        hosting="cloud",
-        lifecycle={"active": "2020-01-01"},
-        depends_on=[{"application": t, "type": k} for t, k in depends_on],
-        it_components=list(it_components),
-    )
-
-
-def component(record_id):
-    return ITComponent(id=record_id, name=record_id, category="software")
-
-
 @pytest.fixture
-def inventory():
+def inventory(make_application, make_component):
+    application, component = make_application, make_component
     # a depends on b twice (file declared before api) and on c; d depends on a;
     # a and b run on db.
     apps = [
@@ -159,7 +143,8 @@ def test_impacted_by_a_component_includes_the_cascade(inventory):
     assert impacted_by(build_graph(inventory), "db") == ["a", "b", "d"]
 
 
-def test_impacted_by_excludes_the_node_itself_inside_a_cycle():
+def test_impacted_by_excludes_the_node_itself_inside_a_cycle(make_application):
+    application = make_application
     apps = [
         application("x", depends_on=[("y", "api")]),
         application("y", depends_on=[("x", "api")]),
@@ -211,7 +196,8 @@ def test_no_cycle_gives_an_empty_list(inventory):
     assert cycles(build_graph(inventory)) == []
 
 
-def test_cycle_starts_with_its_smallest_id_and_keeps_the_direction():
+def test_cycle_starts_with_its_smallest_id_and_keeps_the_direction(make_application):
+    application = make_application
     forward = cyclic_inventory(
         application("y", [("z", "api")]),
         application("z", [("x", "api")]),
@@ -226,7 +212,8 @@ def test_cycle_starts_with_its_smallest_id_and_keeps_the_direction():
     assert cycles(build_graph(backward)) == [("x", "z", "y")]
 
 
-def test_cycles_are_sorted_by_length_then_alphabetically():
+def test_cycles_are_sorted_by_length_then_alphabetically(make_application):
+    application = make_application
     apps = [
         application("x", [("y", "api")]),
         application("y", [("z", "api")]),
@@ -243,7 +230,8 @@ def test_cycles_are_sorted_by_length_then_alphabetically():
     ]
 
 
-def test_result_does_not_depend_on_insertion_order():
+def test_result_does_not_depend_on_insertion_order(make_application):
+    application = make_application
     apps = [
         application("x", [("y", "api")]),
         application("y", [("z", "api")]),
@@ -256,7 +244,8 @@ def test_result_does_not_depend_on_insertion_order():
     assert one_way == other_way == [("p", "q"), ("x", "y", "z")]
 
 
-def test_two_links_between_the_same_pair_do_not_make_a_cycle():
+def test_two_links_between_the_same_pair_do_not_make_a_cycle(make_application):
+    application = make_application
     apps = [application("a", [("b", "api"), ("b", "file")]), application("b")]
     assert cycles(build_graph(cyclic_inventory(*apps))) == []
 
