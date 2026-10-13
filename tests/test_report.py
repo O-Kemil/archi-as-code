@@ -11,6 +11,9 @@ from archinv.report import (
     end_of_life_before,
     most_depended_upon,
     past_end_of_life,
+    render,
+    section,
+    table,
     without_business_owner,
     without_it_component,
 )
@@ -144,3 +147,103 @@ def test_most_depended_upon_omits_zeros_ranks_by_count_then_id_and_cuts_at_limit
     graph = build_graph(Inventory(apps, {}))
     assert most_depended_upon(graph) == [("c", 2), ("d", 2), ("b", 1)]
     assert most_depended_upon(graph, limit=2) == [("c", 2), ("d", 2)]
+
+
+# Markdown rendering (ADR-0006, decision 1).
+
+
+def test_table_renders_header_separator_and_rows():
+    assert table(["A", "B"], [(1, "x"), (2, "y")]) == [
+        "| A | B |",
+        "|---|---|",
+        "| 1 | x |",
+        "| 2 | y |",
+    ]
+
+
+def test_table_escapes_pipes_in_cells():
+    assert table(["A"], [("x | y",)])[2] == "| x \\| y |"
+
+
+def test_section_without_body_says_none():
+    assert section("Title", []) == ["", "## Title", "", "None."]
+
+
+def test_render_starts_with_the_title_and_the_reference_date(real):
+    inventory, graph = real
+    text = render(inventory, graph, REFERENCE)
+    assert text.startswith(
+        "# Anomaly report\n\n"
+        "Reference date: 2026-10-13. Inventory: 15 applications, 9 IT components.\n"
+    )
+
+
+def test_render_mentions_the_deadline_only_when_given(real):
+    inventory, graph = real
+    without = render(inventory, graph, REFERENCE)
+    with_deadline = render(inventory, graph, REFERENCE, DEADLINE)
+    assert "Deadline" not in without
+    assert "## IT components reaching end of life before 2028-03-31" not in without
+    assert "Deadline: 2028-03-31." in with_deadline
+    assert (
+        "| IT components reaching end of life before 2028-03-31 | 2 |" in with_deadline
+    )
+
+
+def test_render_lists_the_sections_in_the_order_of_the_adr(real):
+    inventory, graph = real
+    text = render(inventory, graph, REFERENCE, DEADLINE)
+    assert [line for line in text.splitlines() if line.startswith("## ")] == [
+        "## Summary",
+        "## Applications without business owner",
+        "## Circular dependencies",
+        "## IT components past end of life",
+        "## IT components reaching end of life before 2028-03-31",
+        "## Applications without IT component",
+        "## Most depended-upon applications",
+    ]
+
+
+def test_render_shows_the_expected_anomalies(real):
+    inventory, graph = real
+    text = render(inventory, graph, REFERENCE, DEADLINE)
+    assert "| bi-reporting | BI reporting | Data engineering team |" in text
+    assert (
+        "- order-management -> store-inventory -> warehouse-management -> order-management"
+        in text
+    )
+    assert (
+        "| windows-server-2012-r2 | Windows Server 2012 R2 | 2023-10-10 |"
+        " pos-stores, price-label-printing |"
+    ) in text
+    assert (
+        "| postgresql-15 | PostgreSQL 15 | 2027-11-11 |"
+        " ecommerce-site, order-management, supplier-portal |"
+    ) in text
+    assert "| erp-finance | 6 |" in text
+
+
+def test_render_says_none_for_an_empty_section(real):
+    inventory, graph = real
+    assert "## Applications without IT component\n\nNone.\n" in render(
+        inventory, graph, REFERENCE
+    )
+
+
+def test_render_is_deterministic(real):
+    inventory, graph = real
+    assert render(inventory, graph, REFERENCE, DEADLINE) == render(
+        inventory, graph, REFERENCE, DEADLINE
+    )
+
+
+def test_render_ends_with_a_newline(real):
+    inventory, graph = real
+    assert render(inventory, graph, REFERENCE).endswith("|\n")
+
+
+def test_render_of_an_empty_inventory():
+    empty = Inventory({}, {})
+    text = render(empty, build_graph(empty), REFERENCE)
+    assert "Inventory: 0 applications, 0 IT components." in text
+    assert text.count("None.") == 5
