@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Generated deliverables: produced by the CI, never committed (ADR-0006)
+generated/
+
 # Local files
 CLAUDE.md
 .DS_Store

@@ -36,6 +36,7 @@ git clone https://github.com/O-Kemil/archi-as-code.git
 cd archi-as-code
 uv sync                   # creates .venv with the exact versions of uv.lock
 uv run archinv validate   # checks every record under inventory/
+uv run archinv report --deadline 2028-03-31   # prints the anomaly report
 uv run pytest             # runs the tests
 ```
 
@@ -45,7 +46,9 @@ Keep the clone outside a synchronised folder such as iCloud Drive. Observed on m
 
 ## Continuous integration
 
-GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request: `ruff check`, `ruff format --check`, `archinv validate`, then `pytest`. The inventory is validated before the tests so that an invalid record shows up as a clear error line rather than as a failing test. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
+GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request, every night at 05:17 UTC, and on demand from the Actions tab: `ruff check`, `ruff format --check`, `archinv validate`, `archinv report`, then `pytest`. The inventory is validated and the report built before the tests so that an invalid record shows up as a clear error line rather than as a failing test. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
+
+The anomaly report is shown on the page of each run (job summary) and attached to it as the `anomaly-report` artifact. Nothing under `generated/` is committed (ADR-0006); [`docs/report-example.md`](docs/report-example.md) is a dated snapshot kept for readers of the repository, checked by a test against the curated data set.
 
 The workflow installs the uv version pinned in the file and the Python version pinned in `.python-version`, then `uv sync --locked`, which fails if `pyproject.toml` changed without `uv.lock` being regenerated.
 
@@ -59,7 +62,7 @@ Third-party actions are pinned by commit SHA, with the release tag in a comment,
 | `src/archinv/` | The tool: models, graph, report, exporters |
 | `docs/adr/` | Architecture decision records |
 | `docs/diagrams/` | C4 and ArchiMate views of the tool |
-| `generated/` | Maps and report produced by the tool |
+| `generated/` | Report, later the maps, produced by the tool; not committed, the CI produces them (ADR-0006) |
 
 ## Decisions
 
@@ -81,4 +84,4 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 ## Status
 
-Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. The 24 curated records of the Maison Zola data set (15 applications, 9 IT components) are in `inventory/`. The dependency graph (ADR-0005) is built with NetworkX, 186 tests. Next: the anomaly report.
+Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. The 24 curated records of the Maison Zola data set (15 applications, 9 IT components) are in `inventory/`. The dependency graph (ADR-0005) is built with NetworkX. The anomaly report (ADR-0006) is produced by the CI on every push and every night, 219 tests. Next: the exports.

@@ -19,6 +19,7 @@ from archinv.report import (
 )
 
 INVENTORY = Path(__file__).parent.parent / "inventory"
+EXAMPLE = Path(__file__).parent.parent / "docs" / "report-example.md"
 REFERENCE = date(2026, 10, 13)
 DEADLINE = date(2028, 3, 31)
 
@@ -247,3 +248,15 @@ def test_render_of_an_empty_inventory():
     text = render(empty, build_graph(empty), REFERENCE)
     assert "Inventory: 0 applications, 0 IT components." in text
     assert text.count("None.") == 5
+
+
+# The committed example is a golden file (ADR-0006, decision 5).
+
+
+def test_the_committed_example_is_the_report_of_the_curated_data_set(real):
+    inventory, graph = real
+    text = EXAMPLE.read_text(encoding="utf-8")
+    assert text.startswith("> Example of the anomaly report")
+    assert text.endswith(render(inventory, graph, REFERENCE, DEADLINE)), (
+        "regenerate docs/report-example.md, see its header"
+    )

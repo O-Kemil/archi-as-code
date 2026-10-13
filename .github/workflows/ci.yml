@@ -1,15 +1,20 @@
-# Continuous integration: lint, format check, inventory validation and tests
-# on every push and pull request. The inventory is validated before the tests
-# because one test loads the real inventory/ and would fail with a traceback.
-# Tooling: ADR-0002. Exit statuses of "archinv validate": ADR-0004. Actions
-# and the runner image are pinned; updates are manual (see README,
-# "Continuous integration").
+# Continuous integration: lint, format check, inventory validation, anomaly
+# report and tests on every push and pull request, plus a nightly run so that
+# the report is at the date of the day. The inventory is validated and the
+# report built before the tests, because one test loads the real inventory/
+# and would fail with a traceback. The report is shown on the run page and
+# uploaded as an artifact; nothing is committed (ADR-0006). Tooling: ADR-0002.
+# Exit statuses: ADR-0004 and ADR-0006. Actions and the runner image are
+# pinned; updates are manual (see README, "Continuous integration").
 
 name: CI
 
 on:
   push:
   pull_request:
+  schedule:
+    - cron: "17 5 * * *" # every day at 05:17 UTC, off the busy start of the hour
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -40,6 +45,18 @@ jobs:
 
       - name: Validate the inventory
         run: uv run archinv validate
+
+      - name: Build the anomaly report
+        run: uv run archinv report --deadline 2028-03-31 --output generated/report.md
+
+      - name: Show the report on the run page
+        run: cat generated/report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the report
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: anomaly-report
+          path: generated/
 
       - name: Test
         run: uv run pytest
