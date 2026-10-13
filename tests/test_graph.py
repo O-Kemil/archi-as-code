@@ -13,6 +13,7 @@ from archinv.graph import (
     application_graph,
     applications_using,
     build_graph,
+    cycles,
     dependents,
     dependents_count,
     impacted_by,
@@ -197,3 +198,71 @@ def test_real_inventory_queries():
         "supplier-portal",
     ]
     assert "bi-reporting" in impacted_by(graph, "store-inventory")
+
+
+# Step 3: canonical cycles (ADR-0005, decision 3).
+
+
+def cyclic_inventory(*apps):
+    return Inventory({app.id: app for app in apps}, {})
+
+
+def test_no_cycle_gives_an_empty_list(inventory):
+    assert cycles(build_graph(inventory)) == []
+
+
+def test_cycle_starts_with_its_smallest_id_and_keeps_the_direction():
+    forward = cyclic_inventory(
+        application("y", [("z", "api")]),
+        application("z", [("x", "api")]),
+        application("x", [("y", "api")]),
+    )
+    backward = cyclic_inventory(
+        application("x", [("z", "api")]),
+        application("z", [("y", "api")]),
+        application("y", [("x", "api")]),
+    )
+    assert cycles(build_graph(forward)) == [("x", "y", "z")]
+    assert cycles(build_graph(backward)) == [("x", "z", "y")]
+
+
+def test_cycles_are_sorted_by_length_then_alphabetically():
+    apps = [
+        application("x", [("y", "api")]),
+        application("y", [("z", "api")]),
+        application("z", [("x", "api")]),
+        application("p", [("q", "api")]),
+        application("q", [("p", "api")]),
+        application("m", [("n", "api")]),
+        application("n", [("m", "api")]),
+    ]
+    assert cycles(build_graph(cyclic_inventory(*apps))) == [
+        ("m", "n"),
+        ("p", "q"),
+        ("x", "y", "z"),
+    ]
+
+
+def test_result_does_not_depend_on_insertion_order():
+    apps = [
+        application("x", [("y", "api")]),
+        application("y", [("z", "api")]),
+        application("z", [("x", "api")]),
+        application("p", [("q", "api")]),
+        application("q", [("p", "api")]),
+    ]
+    one_way = cycles(build_graph(cyclic_inventory(*apps)))
+    other_way = cycles(build_graph(cyclic_inventory(*reversed(apps))))
+    assert one_way == other_way == [("p", "q"), ("x", "y", "z")]
+
+
+def test_two_links_between_the_same_pair_do_not_make_a_cycle():
+    apps = [application("a", [("b", "api"), ("b", "file")]), application("b")]
+    assert cycles(build_graph(cyclic_inventory(*apps))) == []
+
+
+def test_real_inventory_has_the_one_expected_cycle():
+    graph = build_graph(load_inventory(INVENTORY))
+    assert cycles(graph) == [
+        ("order-management", "store-inventory", "warehouse-management")
+    ]

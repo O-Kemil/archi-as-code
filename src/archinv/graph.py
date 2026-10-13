@@ -71,3 +71,16 @@ def impacted_by(graph: nx.DiGraph, node_id: str) -> list[str]:
 def dependents_count(graph: nx.DiGraph) -> dict[str, int]:
     """Number of direct dependents of each application, keyed by id in id order."""
     return dict(sorted(application_graph(graph).in_degree))
+
+
+def cycles(graph: nx.DiGraph) -> list[tuple[str, ...]]:
+    """Elementary cycles between applications, in canonical form (ADR-0005, decision 3).
+
+    Each cycle starts with its smallest id, direction preserved; the list is
+    sorted by length, then alphabetically, so that two runs give the same result.
+    """
+    found = []
+    for cycle in nx.simple_cycles(application_graph(graph)):
+        start = cycle.index(min(cycle))
+        found.append(tuple(cycle[start:] + cycle[:start]))
+    return sorted(found, key=lambda cycle: (len(cycle), cycle))
