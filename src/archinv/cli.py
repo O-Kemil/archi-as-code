@@ -1,4 +1,4 @@
-"""Command line interface, as specified in ADR-0004 and ADR-0006."""
+"""Command line interface, as specified in ADR-0004, ADR-0006 and ADR-0007."""
 
 import argparse
 import sys
@@ -7,9 +7,19 @@ from pathlib import Path
 
 from archinv.graph import build_graph
 from archinv.loader import InventoryError, load_inventory
+from archinv.maps import (
+    end_of_life_view,
+    focus_view,
+    global_view,
+    hosting_view,
+    to_dot,
+    to_mermaid,
+)
 from archinv.report import render
 
 DEFAULT_INVENTORY = Path("inventory")
+RENDERERS = {"mermaid": to_mermaid, "dot": to_dot}
+VIEWS = ["global", "hosting", "focus", "end-of-life"]
 
 
 def plural(count: int, word: str) -> str:
@@ -22,6 +32,11 @@ def iso_date(text: str) -> date:
     return date.fromisoformat(text)
 
 
+def today() -> date:
+    """Today in UTC, the same date on a laptop and in the CI at any hour."""
+    return datetime.now(tz=UTC).date()
+
+
 def add_inventory_option(parser: argparse.ArgumentParser) -> None:
     """The option every sub-command shares (ADR-0004, decision 2)."""
     parser.add_argument(
@@ -32,6 +47,43 @@ def add_inventory_option(parser: argparse.ArgumentParser) -> None:
     )
 
 
+def add_date_options(parser: argparse.ArgumentParser) -> None:
+    """Reference date and deadline, shared by report and map (ADR-0006, ADR-0007)."""
+    parser.add_argument(
+        "--reference-date",
+        type=iso_date,
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="date for lifecycle phases and end of life (default: today)",
+    )
+    parser.add_argument(
+        "--deadline",
+        type=iso_date,
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="also consider the components reaching end of life on or before this date",
+    )
+
+
+def add_output_option(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=None,
+        metavar="PATH",
+        help="write to this file, creating its directory (default: standard output)",
+    )
+
+
+def write_output(text: str, output: Path | None) -> None:
+    """To stdout, or to the file, creating its directory."""
+    if output is None:
+        sys.stdout.write(text)
+    else:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(text, encoding="utf-8")
+
+
 def run_validate(args: argparse.Namespace) -> int:
     inventory = load_inventory(args.inventory)
     applications = plural(len(inventory.applications), "application")
@@ -40,20 +92,32 @@ def run_validate(args: argparse.Namespace) -> int:
     return 0
 
 
-def today() -> date:
-    """Today in UTC, the same date on a laptop and in the CI at any hour."""
-    return datetime.now(tz=UTC).date()
-
-
 def run_report(args: argparse.Namespace) -> int:
     inventory = load_inventory(args.inventory)
     reference = args.reference_date or today()
     text = render(inventory, build_graph(inventory), reference, args.deadline)
-    if args.output is None:
-        sys.stdout.write(text)
+    write_output(text, args.output)
+    return 0
+
+
+def run_map(args: argparse.Namespace) -> int:
+    if (args.view == "focus") != (args.focus is not None):
+        args.parser.error("--focus ID is required with --view focus, and only with it")
+    inventory = load_inventory(args.inventory)
+    graph = build_graph(inventory)
+    reference = args.reference_date or today()
+    if args.view == "global":
+        view = global_view(inventory, graph, reference, args.deadline)
+    elif args.view == "hosting":
+        view = hosting_view(inventory, graph, reference, args.deadline)
+    elif args.view == "end-of-life":
+        view = end_of_life_view(inventory, graph, reference, args.deadline)
     else:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(text, encoding="utf-8")
+        try:
+            view = focus_view(inventory, graph, args.focus, reference, args.deadline)
+        except ValueError as error:
+            args.parser.error(str(error))
+    write_output(RENDERERS[args.format](view), args.output)
     return 0
 
 
@@ -73,28 +137,24 @@ def build_parser() -> argparse.ArgumentParser:
         "report", help="write the anomaly report in Markdown"
     )
     add_inventory_option(report)
-    report.add_argument(
-        "--reference-date",
-        type=iso_date,
-        default=None,
-        metavar="YYYY-MM-DD",
-        help="date for lifecycle phases and end of life (default: today)",
-    )
-    report.add_argument(
-        "--deadline",
-        type=iso_date,
-        default=None,
-        metavar="YYYY-MM-DD",
-        help="also list the components reaching end of life on or before this date",
-    )
-    report.add_argument(
-        "--output",
-        type=Path,
-        default=None,
-        metavar="PATH",
-        help="write the report to this file, creating its directory (default: standard output)",
-    )
+    add_date_options(report)
+    add_output_option(report)
     report.set_defaults(run=run_report)
+
+    map_ = subparsers.add_parser("map", help="write a dependency map in Mermaid or DOT")
+    add_inventory_option(map_)
+    map_.add_argument("--format", choices=sorted(RENDERERS), required=True)
+    map_.add_argument(
+        "--view",
+        choices=VIEWS,
+        required=True,
+        help="global: every application; hosting: grouped by hosting; focus: one application"
+        " and its neighbours; end-of-life: components past end of life and their applications",
+    )
+    map_.add_argument("--focus", metavar="ID", help="the application of the focus view")
+    add_date_options(map_)
+    add_output_option(map_)
+    map_.set_defaults(run=run_map, parser=map_)
     return parser
 
 

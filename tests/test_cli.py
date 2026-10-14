@@ -144,3 +144,100 @@ def test_report_on_the_real_inventory_returns_0_despite_anomalies(capsys):
     argv = ["report", "--inventory", str(INVENTORY), "--reference-date", "2026-10-13"]
     assert main(argv) == 0
     assert "| Circular dependencies | 1 |" in capsys.readouterr().out
+
+
+# archinv map (ADR-0007, decision 5).
+
+
+def test_map_mermaid_on_stdout(root, capsys):
+    (root / "applications" / "a.yaml").write_text(VALID_APPLICATION, encoding="utf-8")
+    argv = ["map", "--inventory", str(root), "--format", "mermaid", "--view", "global"]
+    assert main(argv) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("flowchart LR\n")
+    assert '    a["A"]' in out
+
+
+def test_map_dot_to_a_file(root, tmp_path, capsys):
+    output = tmp_path / "out" / "map.dot"
+    argv = ["map", "--inventory", str(root), "--format", "dot", "--view", "hosting"]
+    assert main([*argv, "--output", str(output)]) == 0
+    assert output.read_text(encoding="utf-8").startswith('digraph "hosting" {')
+    assert capsys.readouterr().out == ""
+
+
+def test_map_focus_requires_an_id(root, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        main(["map", "--inventory", str(root), "--format", "dot", "--view", "focus"])
+    assert exit_info.value.code == 2
+    assert "--focus ID is required" in capsys.readouterr().err
+
+
+def test_map_focus_id_only_with_the_focus_view(root, capsys):
+    argv = [
+        "map",
+        "--inventory",
+        str(root),
+        "--format",
+        "dot",
+        "--view",
+        "global",
+        "--focus",
+        "a",
+    ]
+    with pytest.raises(SystemExit) as exit_info:
+        main(argv)
+    assert exit_info.value.code == 2
+
+
+def test_map_unknown_focus_is_a_usage_error(root, capsys):
+    (root / "applications" / "a.yaml").write_text(VALID_APPLICATION, encoding="utf-8")
+    argv = [
+        "map",
+        "--inventory",
+        str(root),
+        "--format",
+        "dot",
+        "--view",
+        "focus",
+        "--focus",
+        "nope",
+    ]
+    with pytest.raises(SystemExit) as exit_info:
+        main(argv)
+    assert exit_info.value.code == 2
+    assert "unknown application 'nope'" in capsys.readouterr().err
+
+
+def test_map_rejects_an_unknown_format(root, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        main(["map", "--inventory", str(root), "--format", "svg", "--view", "global"])
+    assert exit_info.value.code == 2
+    assert "invalid choice: 'svg'" in capsys.readouterr().err
+
+
+def test_map_on_an_invalid_inventory_behaves_like_validate(root, capsys):
+    (root / "applications" / "a.yaml").write_text("", encoding="utf-8")
+    assert (
+        main(["map", "--inventory", str(root), "--format", "dot", "--view", "global"])
+        == 1
+    )
+    assert capsys.readouterr().err.endswith("the file is empty\n1 error\n")
+
+
+def test_map_end_of_life_on_the_real_inventory(capsys):
+    argv = [
+        "map",
+        "--inventory",
+        str(INVENTORY),
+        "--format",
+        "mermaid",
+        "--view",
+        "end-of-life",
+        "--reference-date",
+        "2026-10-14",
+        "--deadline",
+        "2028-03-31",
+    ]
+    assert main(argv) == 0
+    assert 'postgresql_15[("PostgreSQL 15")]' in capsys.readouterr().out
