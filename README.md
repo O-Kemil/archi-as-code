@@ -37,6 +37,8 @@ cd archi-as-code
 uv sync                   # creates .venv with the exact versions of uv.lock
 uv run archinv validate   # checks every record under inventory/
 uv run archinv report --deadline 2028-03-31   # prints the anomaly report
+uv run archinv map --format dot --view hosting --deadline 2028-03-31 --output generated/map-hosting.dot
+dot -Tsvg generated/map-hosting.dot -o generated/map-hosting.svg   # optional, needs Graphviz (brew install graphviz)
 uv run pytest             # runs the tests
 ```
 
@@ -46,9 +48,9 @@ Keep the clone outside a synchronised folder such as iCloud Drive. Observed on m
 
 ## Continuous integration
 
-GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request, every night at 05:17 UTC, and on demand from the Actions tab: `ruff check`, `ruff format --check`, `archinv validate`, `archinv report`, then `pytest`. The inventory is validated and the report built before the tests so that an invalid record shows up as a clear error line rather than as a failing test. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
+GitHub Actions runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on every push and pull request, every night at 05:17 UTC, and on demand from the Actions tab: `ruff check`, `ruff format --check`, `archinv validate`, `archinv report`, `archinv map` for the global, hosting and end-of-life views in Mermaid and DOT, the DOT files rendered to SVG with Graphviz, then `pytest`. The inventory is validated and the deliverables built before the tests so that an invalid record shows up as a clear error line rather than as a failing test. A step that fails makes the push or the pull request fail. The same commands run locally with `uv run`.
 
-The anomaly report is shown on the page of each run (job summary) and attached to it as the `anomaly-report` artifact. Nothing under `generated/` is committed (ADR-0006); [`docs/report-example.md`](docs/report-example.md) is a dated snapshot kept for readers of the repository, checked by a test against the curated data set.
+The anomaly report and the hosting map are shown on the page of each run (job summary); everything under `generated/` (report, `.mmd`, `.dot` and `.svg` maps) is attached to the run as the `deliverables` artifact. Nothing under `generated/` is committed (ADR-0006); [`docs/report-example.md`](docs/report-example.md) is a dated snapshot kept for readers of the repository, checked by a test against the curated data set. Graphviz is installed in the CI from apt, the one unpinned installation of the workflow (ADR-0007).
 
 The workflow installs the uv version pinned in the file and the Python version pinned in `.python-version`, then `uv sync --locked`, which fails if `pyproject.toml` changed without `uv.lock` being regenerated.
 
@@ -85,4 +87,4 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 
 ## Status
 
-Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. The 24 curated records of the Maison Zola data set (15 applications, 9 IT components) are in `inventory/`. The dependency graph (ADR-0005) is built with NetworkX. The anomaly report (ADR-0006) is produced by the CI on every push and every night, 219 tests. Next: the exports.
+Scoping done. Schema (ADR-0001), tooling (ADR-0002), loader (ADR-0003) and command line (ADR-0004) decided and implemented: `archinv validate` works, 158 tests, CI on every push. The 24 curated records of the Maison Zola data set (15 applications, 9 IT components) are in `inventory/`. The dependency graph (ADR-0005) is built with NetworkX. The anomaly report (ADR-0006) and the maps (ADR-0007: Mermaid and Graphviz, four views) are produced by the CI on every push and every night, 264 tests. Next: the generator of the sample records.
