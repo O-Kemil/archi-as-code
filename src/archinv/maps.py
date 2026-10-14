@@ -180,9 +180,11 @@ def end_of_life_view(
 # Mermaid rendering (ADR-0007, decision 1). One documented "style" statement per decorated node:
 # the documentation does not promise that several "class" statements on one node accumulate.
 
+# A dark text colour comes with every fill: GitHub's dark theme otherwise draws light text
+# on the pale fill, which is unreadable (seen on the first CI run, 2026-10-15).
 MERMAID_FILL = {
-    Fill.PAST_END_OF_LIFE: "fill:#f8d0d0,stroke:#b03030",
-    Fill.END_OF_LIFE_BEFORE_DEADLINE: "fill:#fde4c0,stroke:#c07020",
+    Fill.PAST_END_OF_LIFE: "fill:#f8d0d0,stroke:#b03030,color:#1f1f1f",
+    Fill.END_OF_LIFE_BEFORE_DEADLINE: "fill:#fde4c0,stroke:#c07020,color:#1f1f1f",
 }
 MERMAID_NO_OWNER = "stroke-dasharray: 6 4"
 MERMAID_EMPHASIS = "stroke-width:3px"

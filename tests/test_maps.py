@@ -257,12 +257,22 @@ def test_mermaid_groups_become_subgraphs_with_their_labels(real):
 
 def test_mermaid_styles_follow_the_signals(real):
     text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
-    assert "    style data_warehouse fill:#f8d0d0,stroke:#b03030\n" in text
     assert (
-        "    style bi_reporting fill:#fde4c0,stroke:#c07020,stroke-dasharray: 6 4\n"
+        "    style data_warehouse fill:#f8d0d0,stroke:#b03030,color:#1f1f1f\n" in text
+    )
+    assert (
+        "    style bi_reporting fill:#fde4c0,stroke:#c07020,color:#1f1f1f,stroke-dasharray: 6 4\n"
         in text
     )
     assert "style erp_finance" not in text
+
+
+def test_mermaid_text_colour_only_comes_with_a_fill(real):
+    # Dark text on the pale fills, for GitHub's dark theme; nodes without fill keep the theme text.
+    text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
+    for line in text.splitlines():
+        if line.startswith("    style "):
+            assert ("fill:" in line) == ("color:#1f1f1f" in line)
 
 
 def test_mermaid_emphasis_on_the_focus(real):
