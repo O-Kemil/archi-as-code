@@ -235,3 +235,73 @@ def to_mermaid(view: View) -> str:
         if style := mermaid_style(node):
             lines.append(f"    style {mermaid_id(node.id)} {style}")
     return "\n".join(lines) + "\n"
+
+
+# DOT rendering (ADR-0007, decisions 1 and 6). Same colours as Mermaid; the legend is a cluster.
+
+DOT_FILL = {
+    Fill.PAST_END_OF_LIFE: ("#f8d0d0", "#b03030"),
+    Fill.END_OF_LIFE_BEFORE_DEADLINE: ("#fde4c0", "#c07020"),
+}
+DOT_LEGEND = [
+    "subgraph cluster_legend {",
+    '    label="Legend"; fontsize=10; style=dashed; color="#999999";',
+    (
+        '    legend_past [label="runs on a component past end of life", style=filled,'
+        ' fillcolor="#f8d0d0", color="#b03030"];'
+    ),
+    (
+        '    legend_soon [label="runs on a component end of life before the deadline",'
+        ' style=filled, fillcolor="#fde4c0", color="#c07020"];'
+    ),
+    '    legend_owner [label="no business owner", style=dashed];',
+    "}",
+]
+
+
+def dot_quote(text: str) -> str:
+    """A DOT double-quoted string; backslashes and quotes are escaped."""
+    return '"' + text.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def dot_node(node: Node) -> str:
+    attributes = [f"label={dot_quote(node.label)}"]
+    styles = ["filled"] if node.fill else []
+    if node.kind == IT_COMPONENT:
+        attributes.append("shape=cylinder")
+    if node.fill:
+        fill, stroke = DOT_FILL[node.fill]
+        attributes += [f'fillcolor="{fill}"', f'color="{stroke}"']
+    if node.no_owner:
+        styles.append("dashed")
+    if node.emphasis:
+        styles.append("bold")
+    if styles:
+        attributes.append(f'style="{",".join(styles)}"')
+    return f"{dot_quote(node.id)} [{', '.join(attributes)}];"
+
+
+def to_dot(view: View) -> str:
+    """A directed graph for Graphviz, left to right, clusters for the hosting groups."""
+    lines = [
+        f"digraph {dot_quote(view.name)} {{",
+        "    rankdir=LR;",
+        "    node [shape=box, fontname=Helvetica, fontsize=10];",
+        "    edge [fontname=Helvetica, fontsize=9];",
+    ]
+    if view.groups:
+        for group in view.groups:
+            lines.append(f"    subgraph cluster_{group} {{")
+            lines.append(f"        label={dot_quote(GROUP_LABELS[Hosting(group)])};")
+            lines += [f"        {dot_node(n)}" for n in view.nodes if n.group == group]
+            lines.append("    }")
+    else:
+        lines += [f"    {dot_node(n)}" for n in view.nodes]
+    for edge in view.edges:
+        label = f" [label={dot_quote(edge.label)}]" if edge.label else ""
+        lines.append(
+            f"    {dot_quote(edge.source)} -> {dot_quote(edge.target)}{label};"
+        )
+    lines += [f"    {line}" for line in DOT_LEGEND]
+    lines.append("}")
+    return "\n".join(lines) + "\n"

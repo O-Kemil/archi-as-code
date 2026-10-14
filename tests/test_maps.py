@@ -12,12 +12,14 @@ from archinv.maps import (
     Fill,
     Node,
     View,
+    dot_quote,
     end_of_life_view,
     focus_view,
     global_view,
     hosting_view,
     mermaid_id,
     mermaid_label,
+    to_dot,
     to_mermaid,
 )
 
@@ -279,3 +281,77 @@ def test_mermaid_of_the_curated_hosting_view_has_the_expected_size(real):
     text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
     assert text.count("-->") == 27
     assert "    supplier_portal -->|api, file| erp_finance" in text
+
+
+# DOT rendering (ADR-0007, decisions 1 and 6).
+
+
+def test_dot_quote_escapes_backslashes_and_quotes():
+    assert dot_quote('a "b" c\\d') == '"a \\"b\\" c\\\\d"'
+
+
+def test_dot_of_an_empty_view_has_header_and_legend_only():
+    text = to_dot(View("global", [], []))
+    assert text.startswith('digraph "global" {\n    rankdir=LR;\n')
+    assert "    subgraph cluster_legend {" in text
+    assert text.endswith("}\n")
+
+
+def test_dot_application_and_component_nodes():
+    view = View(
+        "end-of-life",
+        [Node("app-a", "App A", APPLICATION), Node("db-1", "DB 1", IT_COMPONENT)],
+        [],
+    )
+    text = to_dot(view)
+    assert '    "app-a" [label="App A"];' in text
+    assert '    "db-1" [label="DB 1", shape=cylinder];' in text
+
+
+def test_dot_edges_with_and_without_label():
+    view = View(
+        "x",
+        [Node("a", "A", APPLICATION), Node("b", "B", APPLICATION)],
+        [Edge("a", "b", "api, file"), Edge("b", "a")],
+    )
+    text = to_dot(view)
+    assert '    "a" -> "b" [label="api, file"];' in text
+    assert '    "b" -> "a";' in text
+
+
+def test_dot_groups_become_clusters(real):
+    text = to_dot(hosting_view(*real, REFERENCE))
+    assert '    subgraph cluster_data_center {\n        label="Data center";' in text
+    assert (
+        text.count("    subgraph cluster_") == 5
+    )  # four hosting groups and the legend
+
+
+def test_dot_styles_follow_the_signals(real):
+    text = to_dot(hosting_view(*real, REFERENCE, DEADLINE))
+    assert (
+        '"data-warehouse" [label="Data warehouse", fillcolor="#f8d0d0", color="#b03030",'
+        ' style="filled"];'
+    ) in text
+    assert (
+        '"bi-reporting" [label="BI reporting", fillcolor="#fde4c0", color="#c07020",'
+        ' style="filled,dashed"];'
+    ) in text
+    assert '"erp-finance" [label="ERP finance"];' in text
+
+
+def test_dot_emphasis_on_the_focus(real):
+    text = to_dot(focus_view(*real, "store-inventory", REFERENCE))
+    assert '"store-inventory" [label="Store inventory", style="bold"];' in text
+
+
+def test_dot_is_deterministic(real):
+    first = to_dot(hosting_view(*real, REFERENCE, DEADLINE))
+    second = to_dot(hosting_view(*real, REFERENCE, DEADLINE))
+    assert first == second
+
+
+def test_dot_of_the_curated_global_view_has_every_pair(real):
+    text = to_dot(global_view(*real, REFERENCE))
+    assert text.count(" -> ") == 27
+    assert '"supplier-portal" -> "erp-finance" [label="api, file"];' in text
