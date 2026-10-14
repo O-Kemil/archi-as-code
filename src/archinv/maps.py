@@ -175,3 +175,63 @@ def end_of_life_view(
         key=lambda e: (e.source, e.target),
     )
     return View("end-of-life", nodes, edges)
+
+
+# Mermaid rendering (ADR-0007, decision 1). One documented "style" statement per decorated node:
+# the documentation does not promise that several "class" statements on one node accumulate.
+
+MERMAID_FILL = {
+    Fill.PAST_END_OF_LIFE: "fill:#f8d0d0,stroke:#b03030",
+    Fill.END_OF_LIFE_BEFORE_DEADLINE: "fill:#fde4c0,stroke:#c07020",
+}
+MERMAID_NO_OWNER = "stroke-dasharray: 6 4"
+MERMAID_EMPHASIS = "stroke-width:3px"
+
+
+def mermaid_id(record_id: str) -> str:
+    """Hyphens have a meaning in Mermaid; slugs never contain underscores, so no collision."""
+    return record_id.replace("-", "_")
+
+
+def mermaid_label(text: str) -> str:
+    """Labels are quoted; a quote inside becomes the Mermaid entity code."""
+    return text.replace('"', "#quot;")
+
+
+def mermaid_node(node: Node) -> str:
+    label = mermaid_label(node.label)
+    shape = f'[("{label}")]' if node.kind == IT_COMPONENT else f'["{label}"]'
+    return f"{mermaid_id(node.id)}{shape}"
+
+
+def mermaid_style(node: Node) -> str:
+    """The style of a node from its signals, in a fixed order: fill, border, emphasis."""
+    parts = []
+    if node.fill:
+        parts.append(MERMAID_FILL[node.fill])
+    if node.no_owner:
+        parts.append(MERMAID_NO_OWNER)
+    if node.emphasis:
+        parts.append(MERMAID_EMPHASIS)
+    return ",".join(parts)
+
+
+def to_mermaid(view: View) -> str:
+    """A flowchart, left to right, with the conventions of ADR-0007 as node styles."""
+    lines = ["flowchart LR"]
+    if view.groups:
+        for group in view.groups:
+            lines.append(f'    subgraph {group}["{GROUP_LABELS[Hosting(group)]}"]')
+            lines += [
+                f"        {mermaid_node(n)}" for n in view.nodes if n.group == group
+            ]
+            lines.append("    end")
+    else:
+        lines += [f"    {mermaid_node(n)}" for n in view.nodes]
+    for edge in view.edges:
+        arrow = f"-->|{mermaid_label(edge.label)}|" if edge.label else "-->"
+        lines.append(f"    {mermaid_id(edge.source)} {arrow} {mermaid_id(edge.target)}")
+    for node in view.nodes:
+        if style := mermaid_style(node):
+            lines.append(f"    style {mermaid_id(node.id)} {style}")
+    return "\n".join(lines) + "\n"

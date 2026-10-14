@@ -1,4 +1,4 @@
-"""Tests for the map views (ADR-0007, step 1: format-independent preparation)."""
+"""Tests for the maps (ADR-0007): the views and their renderings."""
 
 from datetime import date
 from pathlib import Path
@@ -10,10 +10,15 @@ from archinv.loader import Inventory, load_inventory
 from archinv.maps import (
     Edge,
     Fill,
+    Node,
+    View,
     end_of_life_view,
     focus_view,
     global_view,
     hosting_view,
+    mermaid_id,
+    mermaid_label,
+    to_mermaid,
 )
 
 INVENTORY = Path(__file__).parent.parent / "inventory"
@@ -202,3 +207,75 @@ def test_end_of_life_view_is_empty_when_nothing_is_end_of_life(
     view = end_of_life_view(inventory, build_graph(inventory), REFERENCE)
     assert view.nodes == []
     assert view.edges == []
+
+
+# Mermaid rendering (ADR-0007, decision 1).
+
+
+def test_mermaid_id_replaces_hyphens():
+    assert mermaid_id("pos-stores") == "pos_stores"
+
+
+def test_mermaid_label_escapes_quotes():
+    assert mermaid_label('Say "hi"') == "Say #quot;hi#quot;"
+
+
+def test_mermaid_of_an_empty_view_is_a_valid_empty_flowchart():
+    assert to_mermaid(View("global", [], [])) == "flowchart LR\n"
+
+
+def test_mermaid_application_and_component_shapes():
+    view = View(
+        "end-of-life",
+        [Node("app-a", "App A", APPLICATION), Node("db-1", "DB 1", IT_COMPONENT)],
+        [],
+    )
+    text = to_mermaid(view)
+    assert '    app_a["App A"]' in text
+    assert '    db_1[("DB 1")]' in text
+
+
+def test_mermaid_edges_with_and_without_label():
+    view = View(
+        "x",
+        [Node("a", "A", APPLICATION), Node("b", "B", APPLICATION)],
+        [Edge("a", "b", "api, file"), Edge("b", "a")],
+    )
+    text = to_mermaid(view)
+    assert "    a -->|api, file| b" in text
+    assert "    b --> a" in text
+
+
+def test_mermaid_groups_become_subgraphs_with_their_labels(real):
+    text = to_mermaid(hosting_view(*real, REFERENCE))
+    assert '    subgraph data_center["Data center"]' in text
+    assert '        pos_stores["Point of sale"]' in text
+    assert text.count("    end\n") == 4
+
+
+def test_mermaid_styles_follow_the_signals(real):
+    text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
+    assert "    style data_warehouse fill:#f8d0d0,stroke:#b03030\n" in text
+    assert (
+        "    style bi_reporting fill:#fde4c0,stroke:#c07020,stroke-dasharray: 6 4\n"
+        in text
+    )
+    assert "style erp_finance" not in text
+
+
+def test_mermaid_emphasis_on_the_focus(real):
+    text = to_mermaid(focus_view(*real, "store-inventory", REFERENCE))
+    assert "    style store_inventory stroke-width:3px\n" in text
+    assert text.count("stroke-width:3px") == 1
+
+
+def test_mermaid_is_deterministic(real):
+    first = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
+    second = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
+    assert first == second
+
+
+def test_mermaid_of_the_curated_hosting_view_has_the_expected_size(real):
+    text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
+    assert text.count("-->") == 27
+    assert "    supplier_portal -->|api, file| erp_finance" in text
