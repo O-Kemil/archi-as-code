@@ -88,7 +88,13 @@ def test_most_depended_upon_starts_with_the_two_hubs(real):
 
 
 def test_results_are_sorted_by_id_whatever_the_insertion_order(make_application):
-    apps = {a.id: a for a in [make_application("z"), make_application("y")]}
+    apps = {
+        a.id: a
+        for a in [
+            make_application("z", business_owner=None),
+            make_application("y", business_owner=None),
+        ]
+    }
     assert [a.id for a in without_business_owner(Inventory(apps, {}))] == ["y", "z"]
 
 

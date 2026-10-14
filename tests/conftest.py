@@ -9,11 +9,18 @@ from archinv.models import Application, ITComponent
 def make_application():
     """Build a valid application with the given id; depends_on takes (target, type) pairs."""
 
-    def factory(record_id, depends_on=(), it_components=(), hosting="cloud"):
+    def factory(
+        record_id,
+        depends_on=(),
+        it_components=(),
+        hosting="cloud",
+        business_owner="Owner",
+    ):
         return Application(
             id=record_id,
             name=record_id,
             description="d",
+            business_owner=business_owner,
             business_criticality="administrative_service",
             hosting=hosting,
             lifecycle={"active": "2020-01-01"},
