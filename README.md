@@ -4,6 +4,10 @@ A small tool that keeps an application inventory in Git, checks it automatically
 
 This is a personal learning project. See [Framing and limits](#limits).
 
+![Dependency map of the sample data set, grouped by hosting](docs/map-hosting-example.svg)
+
+*Hosting view of the curated data set as of commit 3d4a32d, rendered on 2026-10-15 with `--reference-date 2026-10-15 --deadline 2028-03-31`. Dashed border: no business owner. Red: runs on a component past end of life. Orange: runs on a component reaching end of life before the deadline. The CI regenerates this map on every push; this file is a dated snapshot.*
+
 ## Why
 
 In many IT departments, knowledge about applications is scattered across spreadsheets, diagrams and people's memory. Nobody can reliably say which applications depend on each other, which ones run on end-of-life technologies, or who owns them.

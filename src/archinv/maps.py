@@ -286,6 +286,7 @@ def to_dot(view: View) -> str:
     lines = [
         f"digraph {dot_quote(view.name)} {{",
         "    rankdir=LR;",
+        "    graph [fontname=Helvetica];",
         "    node [shape=box, fontname=Helvetica, fontsize=10];",
         "    edge [fontname=Helvetica, fontsize=9];",
     ]
