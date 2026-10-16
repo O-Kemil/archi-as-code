@@ -81,6 +81,7 @@ Every structuring decision is recorded as an ADR in [`docs/adr/`](docs/adr/).
 - [ADR-0005: Dependency graph model](docs/adr/0005-dependency-graph.md), accepted 2026-10-09.
 - [ADR-0006: Anomaly report and generated deliverables](docs/adr/0006-anomaly-report.md), accepted 2026-10-13.
 - [ADR-0007: Maps, content, views and formats](docs/adr/0007-maps.md), accepted 2026-10-14.
+- [ADR-0008: Archi export, ArchiMate mapping and exchange format](docs/adr/0008-archi-export.md), accepted 2026-10-16.
 
 ## Limits
 
