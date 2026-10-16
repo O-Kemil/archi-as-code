@@ -35,11 +35,11 @@ def make_application():
 def make_component():
     """Build a valid IT component; lifecycle is None, a dict, or set from end_of_life."""
 
-    def factory(record_id, end_of_life=None, lifecycle=None):
+    def factory(record_id, end_of_life=None, lifecycle=None, category="software"):
         if end_of_life is not None:
             lifecycle = {"end_of_life": end_of_life}
         return ITComponent(
-            id=record_id, name=record_id, category="software", lifecycle=lifecycle
+            id=record_id, name=record_id, category=category, lifecycle=lifecycle
         )
 
     return factory
