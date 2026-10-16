@@ -47,6 +47,10 @@ Facts verified on 2026-10-09:
 4. Determinism: every result that is a collection is sorted by id before being returned.
 5. NetworkX is added as a production dependency with this module (ADR-0002: dependencies arrive with the code that needs them).
 
+## Notes
+
+- 2026-10-16: `impacted_by` (dependents in cascade) is provided by the graph module but has no consumer in v1, neither the report nor a map. It is kept for the migration map planned in v1.1.
+
 ## Consequences
 
 - Positive: the map, the report and the Archi export share one structure; the impact of an end-of-life component is one query; cycles are reported with their direction and stay stable in `generated/`.

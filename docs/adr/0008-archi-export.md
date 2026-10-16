@@ -11,10 +11,10 @@ The scoping note asks for an export that the team's modelling tool, Archi, opens
 Facts verified on 2026-10-16:
 
 - Archi 5.10.0 is the current release; its relationship rules file (`relationships.xml`) is versioned 3.2, so Archi applies the ArchiMate 3.2 relationship matrix. Archi imports, without plugin, an Open Exchange XML file ("File > Import > Open Exchange XML Model...", which creates a new model) and CSV files into an existing model; its own Open Exchange export offers "Validate after export" against the XSD schemas. Archi also runs headless from the command line (`--xmlexchange.import`, `--saveModel`, with `xvfb-run` on Linux).
-- The Open Group publishes the ArchiMate Model Exchange File Format 3.1 (for ArchiMate 3.1 and 3.2) as three XSD files, reachable without an account, with the namespace `http://www.opengroup.org/xsd/archimate/3.0/`. A model holds `elements`, `relationships`, optional `organizations`, `propertyDefinitions` and `views`; every concept takes a `documentation` and `properties`. The `identifier` attribute is an `xs:ID`, an XML name: unique in the file, not starting with a digit, letters, digits, `-`, `_` and `.` allowed, no space or colon (pattern `[\i-[:]][\c-[:]]*`, checked with xmlschema). The XSD files carry no licence notice.
+- The Open Group publishes the ArchiMate Model Exchange File Format 3.1 (for ArchiMate 3.1 and 3.2) as three XSD files, reachable without an account, with the namespace `http://www.opengroup.org/xsd/archimate/3.0/`. A model holds `elements`, `relationships`, optional `organizations`, `propertyDefinitions` and `views`; every concept takes a `documentation` and `properties`. The `identifier` attribute is an `xs:ID`, an XML name: unique in the file, not starting with a digit, letters, digits, `-`, `_` and `.` allowed, no space or colon (pattern `[\i-[:]][\c-[:]]*`, checked with xmlschema). The XSD files carry no license notice.
 - The ArchiMate 3.2 specification on the Open Group site now requires an account; the relationship rules below are taken from Archi's own matrix, which is what decides whether an import succeeds. With Archi's key letters (`a` Access, `f` Flow, `i` Assignment, `o` Association, `r` Realization, `t` Triggering, `v` Serving): ApplicationComponent to ApplicationComponent allows `c f g o r s t v` and not Access; SystemSoftware, Device and Node to ApplicationComponent allow `f o r t v`; TechnologyService to ApplicationComponent allows `f o t v`; ApplicationComponent to SystemSoftware allows `f o t v`.
 - The schema of ADR-0001 records which application triggers an exchange, not which way the data flows.
-- `xmlschema` 4.3.2 validates XML against XSD in pure Python, MIT licence.
+- `xmlschema` 4.3.2 validates XML against XSD in pure Python, MIT license.
 
 ## Decision drivers
 
@@ -45,7 +45,7 @@ Facts verified on 2026-10-16:
 
 ### Where the XSD files live
 
-- Committed in the repository: offline and reproducible, but the files carry no licence. Rejected.
+- Committed in the repository: offline and reproducible, but the files carry no license. Rejected.
 - Downloaded into a git-ignored cache when the test runs: in the CI the test fails if the download fails; on a laptop without network the test is skipped with a message saying how to fetch the files.
 
 ## Decision

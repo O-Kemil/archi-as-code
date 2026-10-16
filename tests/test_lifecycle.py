@@ -40,7 +40,8 @@ def test_converts_iso_text_to_date():
 
 
 def test_accepts_two_phases_on_the_same_day():
-    Lifecycle(phase_out=date(2027, 6, 30), end_of_life=date(2027, 6, 30))
+    lifecycle = Lifecycle(phase_out=date(2027, 6, 30), end_of_life=date(2027, 6, 30))
+    assert lifecycle.phase_out == lifecycle.end_of_life
 
 
 @pytest.mark.parametrize("value", ["2015-13-01", "01/03/2015", "soon", 20150301, True])

@@ -44,7 +44,7 @@ def nodes_by_id(view):
     return {node.id: node for node in view.nodes}
 
 
-# Curated data set.
+# Complete data set.
 
 
 def test_global_view_has_every_application_and_pair(real):
@@ -65,7 +65,7 @@ def test_global_view_labels_are_the_record_names(real):
     )
 
 
-def test_signals_on_the_curated_data_set(real):
+def test_signals_on_the_complete_data_set(real):
     nodes = nodes_by_id(global_view(*real, REFERENCE, DEADLINE))
     assert nodes["pos-stores"].fill is Fill.PAST_END_OF_LIFE
     assert nodes["bi-reporting"].no_owner
@@ -118,7 +118,7 @@ def test_focus_view_rejects_anything_but_an_application(real, focus):
         focus_view(*real, focus, REFERENCE)
 
 
-def test_end_of_life_view_on_the_curated_data_set(real):
+def test_end_of_life_view_on_the_complete_data_set(real):
     _, graph = real
     view = end_of_life_view(*real, REFERENCE, DEADLINE)
     components = [n for n in view.nodes if n.kind == IT_COMPONENT]
@@ -299,7 +299,7 @@ def test_mermaid_is_deterministic(real):
     assert first == second
 
 
-def test_mermaid_of_the_curated_hosting_view_has_the_expected_size(real):
+def test_mermaid_of_the_complete_hosting_view_has_the_expected_size(real):
     _, graph = real
     text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
     assert text.count("-->") == application_graph(graph).number_of_edges()
@@ -374,7 +374,7 @@ def test_dot_is_deterministic(real):
     assert first == second
 
 
-def test_dot_of_the_curated_global_view_has_every_pair(real):
+def test_dot_of_the_complete_global_view_has_every_pair(real):
     _, graph = real
     text = to_dot(global_view(*real, REFERENCE))
     assert text.count(" -> ") == application_graph(graph).number_of_edges()

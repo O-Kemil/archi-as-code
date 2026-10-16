@@ -30,7 +30,7 @@ def real():
     return inventory, build_graph(inventory)
 
 
-# Acceptance: the expected anomalies of the curated data set.
+# Expected anomalies of the complete data set (the exact list is in tests/test_dataset.py).
 
 
 def test_one_cycle(real):
@@ -263,7 +263,7 @@ def test_render_of_an_empty_inventory():
 # The committed example is a golden file (ADR-0006, decision 5).
 
 
-def test_the_committed_example_is_the_report_of_the_curated_data_set(real):
+def test_the_committed_example_is_the_report_of_the_complete_data_set(real):
     inventory, graph = real
     text = EXAMPLE.read_text(encoding="utf-8")
     assert text.startswith("> Example of the anomaly report")

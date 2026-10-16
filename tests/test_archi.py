@@ -322,7 +322,8 @@ def every_category_inventory(make_application, make_component):
     )
 
 
-def test_export_of_the_curated_data_set_is_valid_against_the_xsd(model, xsd_schema):
+def test_export_of_the_complete_data_set_is_valid_against_the_xsd(model, xsd_schema):
+    # validate() raises with the first violation: that is the assertion.
     xsd_schema.validate(to_xml(model))
 
 
@@ -330,6 +331,7 @@ def test_export_with_every_component_category_is_valid_against_the_xsd(
     every_category_inventory, xsd_schema
 ):
     inventory = every_category_inventory
+    # validate() raises with the first violation: that is the assertion.
     xsd_schema.validate(
         to_xml(build_model(inventory, build_graph(inventory), REFERENCE))
     )
@@ -368,7 +370,7 @@ def relationship_triples(model):
     return {(types[r.source], types[r.target], r.type) for r in model.relationships}
 
 
-def test_every_relationship_of_the_curated_data_set_is_allowed_by_archi(model):
+def test_every_relationship_of_the_complete_data_set_is_allowed_by_archi(model):
     assert relationship_triples(model) <= ALLOWED_RELATIONSHIPS
 
 

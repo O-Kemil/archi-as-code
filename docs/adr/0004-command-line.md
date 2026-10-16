@@ -38,7 +38,7 @@ The loader (ADR-0003) returns a valid inventory or raises `InventoryError` with 
 
 | Situation | Output | Status |
 |---|---|---|
-| Valid inventory | one line on stdout: `Inventory valid: 15 applications, 12 IT components` | 0 |
+| Valid inventory | one line on stdout: `Inventory valid: 60 applications, 13 IT components` | 0 |
 | Invalid inventory (`InventoryError`, including a missing directory) | one line per error on stderr, then `3 errors` | 1 |
 | Usage error (unknown sub-command or option, no sub-command) | argparse message on stderr | 2 |
 | Unexpected exception | Python traceback | 1 (Python default) |

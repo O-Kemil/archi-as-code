@@ -35,7 +35,8 @@ def test_accepts_a_description():
 
 def test_accepts_a_description_left_blank():
     # YAML reads "description:" with no value as None.
-    Dependency(application="erp-finance", type="file", description=None)
+    dependency = Dependency(application="erp-finance", type="file", description=None)
+    assert dependency.description is None
 
 
 @pytest.mark.parametrize("slug", ["a", "erp-finance", "crm2", "2024", "a-1-b"])
