@@ -1,0 +1,10 @@
+# Source: https://learn.microsoft.com/en-us/lifecycle/products/windows-server-2022, consulted 2026-10-16.
+# end_of_life is the Extended End Date; Extended Security Updates (paid) are excluded.
+id: windows-server-2022
+name: Windows Server 2022
+category: software
+vendor: Microsoft
+version: "10.0"
+lifecycle:
+  active: 2021-08-18
+  end_of_life: 2031-10-14

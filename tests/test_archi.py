@@ -51,10 +51,13 @@ def test_identifiers_are_xml_names_and_unambiguous():
     assert relationship_id("pos-stores", "erp") != relationship_id("pos", "stores-erp")
 
 
-def test_model_name_and_documentation(model):
+def test_model_name_and_documentation(real, model):
+    inventory, _ = real
     assert model.name == "Maison Zola application inventory"
     assert model.documentation == (
-        "Produced by archinv. Reference date: 2026-10-16. 15 applications, 9 IT components."
+        "Produced by archinv. Reference date: 2026-10-16."
+        f" {len(inventory.applications)} applications,"
+        f" {len(inventory.it_components)} IT components."
     )
 
 

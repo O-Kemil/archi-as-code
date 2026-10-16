@@ -1,0 +1,12 @@
+# Source: https://learn.microsoft.com/en-us/lifecycle/products/sql-server-2022, consulted 2026-10-16.
+# end_of_life is the Extended End Date; Extended Security Updates (paid) are excluded.
+# Version 16.0: Microsoft Support, "Latest Updates and Version History for SQL Server",
+# https://support.microsoft.com/servicing/sql/kb321185-download-and-install-latest-updates, consulted 2026-10-16.
+id: sql-server-2022
+name: SQL Server 2022
+category: software
+vendor: Microsoft
+version: "16.0"
+lifecycle:
+  active: 2022-11-16
+  end_of_life: 2033-01-11

@@ -1,0 +1,10 @@
+# Source: https://www.postgresql.org/support/versioning/, consulted 2026-10-16.
+# end_of_life is the final release date of the major version.
+id: postgresql-16
+name: PostgreSQL 16
+category: software
+vendor: PostgreSQL Global Development Group
+version: "16"
+lifecycle:
+  active: 2023-09-14
+  end_of_life: 2028-11-09

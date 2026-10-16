@@ -1,5 +1,7 @@
 # Source: https://learn.microsoft.com/en-us/lifecycle/products/sql-server-2014, consulted 2026-10-09.
 # end_of_life is the Extended End Date; Extended Security Updates (paid) are excluded.
+# Version 12.0: Microsoft Support, "Latest Updates and Version History for SQL Server",
+# https://support.microsoft.com/servicing/sql/kb321185-download-and-install-latest-updates, consulted 2026-10-16.
 id: sql-server-2014
 name: SQL Server 2014
 category: software

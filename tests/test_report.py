@@ -181,7 +181,8 @@ def test_render_starts_with_the_title_and_the_reference_date(real):
     text = render(inventory, graph, REFERENCE)
     assert text.startswith(
         "# Anomaly report\n\n"
-        "Reference date: 2026-10-13. Inventory: 15 applications, 9 IT components.\n"
+        f"Reference date: 2026-10-13. Inventory: {len(inventory.applications)} applications,"
+        f" {len(inventory.it_components)} IT components.\n"
     )
 
 
