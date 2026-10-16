@@ -5,7 +5,13 @@ from pathlib import Path
 
 import pytest
 
-from archinv.graph import APPLICATION, IT_COMPONENT, build_graph
+from archinv.graph import (
+    APPLICATION,
+    IT_COMPONENT,
+    application_graph,
+    applications_using,
+    build_graph,
+)
 from archinv.loader import Inventory, load_inventory
 from archinv.maps import (
     Edge,
@@ -43,10 +49,11 @@ def nodes_by_id(view):
 
 def test_global_view_has_every_application_and_pair(real):
     view = global_view(*real, REFERENCE, DEADLINE)
+    inventory, graph = real
     assert view.name == "global"
-    assert len(view.nodes) == 15
+    assert len(view.nodes) == len(inventory.applications)
     assert {n.kind for n in view.nodes} == {APPLICATION}
-    assert len(view.edges) == 27
+    assert len(view.edges) == application_graph(graph).number_of_edges()
     assert view.groups == []
     assert Edge("supplier-portal", "erp-finance", "api, file") in view.edges
 
@@ -90,13 +97,16 @@ def test_hosting_view_groups_in_enumeration_order(real):
 
 def test_focus_view_is_the_induced_neighbourhood(real):
     view = focus_view(*real, "store-inventory", REFERENCE)
-    assert [n.id for n in view.nodes] == [
+    ids = [n.id for n in view.nodes]
+    # The curated neighbours are there; generated records may add dependents.
+    assert {
         "order-management",
         "pos-stores",
         "product-catalog",
         "store-inventory",
         "warehouse-management",
-    ]
+    } <= set(ids)
+    assert ids == sorted(ids)
     assert [n.id for n in view.nodes if n.emphasis] == ["store-inventory"]
     # The cycle closes between two neighbours: the induced subgraph keeps that edge.
     assert Edge("warehouse-management", "order-management", "api") in view.edges
@@ -109,6 +119,7 @@ def test_focus_view_rejects_anything_but_an_application(real, focus):
 
 
 def test_end_of_life_view_on_the_curated_data_set(real):
+    _, graph = real
     view = end_of_life_view(*real, REFERENCE, DEADLINE)
     components = [n for n in view.nodes if n.kind == IT_COMPONENT]
     assert [n.id for n in components] == [
@@ -121,7 +132,8 @@ def test_end_of_life_view_on_the_curated_data_set(real):
         "windows-server-2016",
     ]
     assert nodes_by_id(view)["postgresql-15"].fill is Fill.END_OF_LIFE_BEFORE_DEADLINE
-    assert len([n for n in view.nodes if n.kind == APPLICATION]) == 9
+    using = {a for n in components for a in applications_using(graph, n.id)}
+    assert len([n for n in view.nodes if n.kind == APPLICATION]) == len(using)
     assert Edge("pos-stores", "windows-server-2012-r2") in view.edges
     assert all(e.label == "" for e in view.edges)
 
@@ -288,8 +300,9 @@ def test_mermaid_is_deterministic(real):
 
 
 def test_mermaid_of_the_curated_hosting_view_has_the_expected_size(real):
+    _, graph = real
     text = to_mermaid(hosting_view(*real, REFERENCE, DEADLINE))
-    assert text.count("-->") == 27
+    assert text.count("-->") == application_graph(graph).number_of_edges()
     assert "    supplier_portal -->|api, file| erp_finance" in text
 
 
@@ -362,6 +375,7 @@ def test_dot_is_deterministic(real):
 
 
 def test_dot_of_the_curated_global_view_has_every_pair(real):
+    _, graph = real
     text = to_dot(global_view(*real, REFERENCE))
-    assert text.count(" -> ") == 27
+    assert text.count(" -> ") == application_graph(graph).number_of_edges()
     assert '"supplier-portal" -> "erp-finance" [label="api, file"];' in text

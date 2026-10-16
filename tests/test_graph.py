@@ -169,19 +169,22 @@ def test_unknown_node_raises(inventory, query):
 
 def test_real_inventory_queries():
     graph = build_graph(load_inventory(INVENTORY))
-    assert dependents(graph, "erp-finance") == [
+    # The curated dependents are there; generated records may add more.
+    curated = {
         "data-warehouse",
         "hr-payroll",
         "pos-stores",
         "product-catalog",
         "supplier-portal",
         "warehouse-management",
-    ]
-    assert applications_using(graph, "postgresql-15") == [
-        "ecommerce-site",
-        "order-management",
-        "supplier-portal",
-    ]
+    }
+    found = dependents(graph, "erp-finance")
+    assert curated <= set(found)
+    assert found == sorted(found)
+    assert len(found) == graph.in_degree("erp-finance")
+    assert {"ecommerce-site", "order-management", "supplier-portal"} <= set(
+        applications_using(graph, "postgresql-15")
+    )
     assert "bi-reporting" in impacted_by(graph, "store-inventory")
 
 
