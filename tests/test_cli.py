@@ -241,3 +241,49 @@ def test_map_end_of_life_on_the_real_inventory(capsys):
     ]
     assert main(argv) == 0
     assert 'postgresql_15[("PostgreSQL 15")]' in capsys.readouterr().out
+
+
+# archinv archi (ADR-0008, decision 5).
+
+
+def test_archi_prints_xml_on_stdout(root, capsys):
+    (root / "applications" / "a.yaml").write_text(VALID_APPLICATION, encoding="utf-8")
+    assert (
+        main(["archi", "--inventory", str(root), "--reference-date", "2026-10-16"]) == 0
+    )
+    out = capsys.readouterr().out
+    assert out.startswith("<?xml version='1.0' encoding='utf-8'?>\n<model xmlns=")
+    assert '<name xml:lang="en">Application inventory</name>' in out
+    assert "Reference date: 2026-10-16." in out
+
+
+def test_archi_name_option(root, capsys):
+    assert main(["archi", "--inventory", str(root), "--name", "Maison Zola"]) == 0
+    assert '<name xml:lang="en">Maison Zola</name>' in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("name", ["", "   "])
+def test_archi_rejects_an_empty_name(root, capsys, name):
+    with pytest.raises(SystemExit) as exit_info:
+        main(["archi", "--inventory", str(root), "--name", name])
+    assert exit_info.value.code == 2
+    assert "--name must not be empty" in capsys.readouterr().err
+
+
+def test_archi_writes_the_file_and_creates_its_directory(root, tmp_path, capsys):
+    output = tmp_path / "out" / "inventory.archimate.xml"
+    assert main(["archi", "--inventory", str(root), "--output", str(output)]) == 0
+    assert output.read_text(encoding="utf-8").startswith("<?xml")
+    assert capsys.readouterr().out == ""
+
+
+def test_archi_has_no_deadline_option(root, capsys):
+    with pytest.raises(SystemExit) as exit_info:
+        main(["archi", "--inventory", str(root), "--deadline", "2028-03-31"])
+    assert exit_info.value.code == 2
+
+
+def test_archi_on_an_invalid_inventory_behaves_like_validate(root, capsys):
+    (root / "applications" / "a.yaml").write_text("", encoding="utf-8")
+    assert main(["archi", "--inventory", str(root)]) == 1
+    assert capsys.readouterr().err.endswith("the file is empty\n1 error\n")

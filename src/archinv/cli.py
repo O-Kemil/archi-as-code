@@ -1,10 +1,11 @@
-"""Command line interface, as specified in ADR-0004, ADR-0006 and ADR-0007."""
+"""Command line interface, as specified in ADR-0004, ADR-0006, ADR-0007 and ADR-0008."""
 
 import argparse
 import sys
 from datetime import UTC, date, datetime
 from pathlib import Path
 
+from archinv.archi import DEFAULT_MODEL_NAME, build_model, to_xml
 from archinv.graph import build_graph
 from archinv.loader import InventoryError, load_inventory
 from archinv.maps import (
@@ -121,6 +122,16 @@ def run_map(args: argparse.Namespace) -> int:
     return 0
 
 
+def run_archi(args: argparse.Namespace) -> int:
+    if not args.name.strip():
+        args.parser.error("--name must not be empty")
+    inventory = load_inventory(args.inventory)
+    reference = args.reference_date or today()
+    model = build_model(inventory, build_graph(inventory), reference, args.name.strip())
+    write_output(to_xml(model), args.output)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="archinv", description="Application inventory as code."
@@ -155,6 +166,26 @@ def build_parser() -> argparse.ArgumentParser:
     add_date_options(map_)
     add_output_option(map_)
     map_.set_defaults(run=run_map, parser=map_)
+
+    archi = subparsers.add_parser(
+        "archi", help="write the inventory as an ArchiMate exchange file"
+    )
+    add_inventory_option(archi)
+    # No --deadline here: the export writes dates, it compares nothing to a deadline.
+    archi.add_argument(
+        "--reference-date",
+        type=iso_date,
+        default=None,
+        metavar="YYYY-MM-DD",
+        help="date of the lifecycle_phase property (default: today)",
+    )
+    archi.add_argument(
+        "--name",
+        default=DEFAULT_MODEL_NAME,
+        help="name of the model (default: %(default)s)",
+    )
+    add_output_option(archi)
+    archi.set_defaults(run=run_archi, parser=archi)
     return parser
 
 
