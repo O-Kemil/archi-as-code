@@ -46,6 +46,8 @@ dot -Tsvg generated/map-hosting.dot -o generated/map-hosting.svg   # optional, n
 uv run pytest             # runs the tests
 ```
 
+The first `pytest` downloads the three ArchiMate exchange format XSD files (about 86 KB) from The Open Group into `.cache/archimate-xsd/`, which git ignores, to validate the Archi export. Without network the validation tests are skipped and say how to fetch the files by hand.
+
 `archinv validate` prints `Inventory valid: ...` and exits with status 0, or prints one line per error, with the file and the field, and exits with status 1 (ADR-0004).
 
 Keep the clone outside a synchronised folder such as iCloud Drive. Observed on macOS: files in `.venv` ended up flagged as hidden, and Python 3.13 skips a hidden `.pth` file, so `archinv` could no longer be imported.

@@ -1,10 +1,13 @@
 """Tests for the Archi export (ADR-0008)."""
 
+import os
+import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import date
 from pathlib import Path
 
 import pytest
+import xmlschema
 
 from archinv.archi import (
     NAMESPACE,
@@ -271,3 +274,108 @@ def test_xml_of_an_empty_inventory_is_well_formed():
     assert len(root.find("a:elements", NS)) == 0
     assert len(root.find("a:relationships", NS)) == 0
     assert len(root.find("a:propertyDefinitions", NS)) == len(PROPERTY_NAMES)
+
+
+# Step 3, level 1: the export is valid against the official schema (ADR-0008, decision 6).
+
+XSD_BASE = "https://www.opengroup.org/xsd/archimate/3.1/"
+XSD_FILES = ["archimate3_Model.xsd", "archimate3_View.xsd", "archimate3_Diagram.xsd"]
+XSD_CACHE = Path(__file__).parent.parent / ".cache" / "archimate-xsd"  # git-ignored
+
+
+@pytest.fixture(scope="module")
+def xsd_schema():
+    """The Open Group schema, from the cache or downloaded.
+
+    In the CI (CI=true) a failed download fails the tests; on a laptop they are skipped.
+    """
+    missing = [name for name in XSD_FILES if not (XSD_CACHE / name).exists()]
+    if missing:
+        XSD_CACHE.mkdir(parents=True, exist_ok=True)
+        try:
+            for name in missing:
+                with urllib.request.urlopen(XSD_BASE + name, timeout=20) as response:
+                    (XSD_CACHE / name).write_bytes(response.read())
+        except OSError as error:
+            message = (
+                f"could not download the ArchiMate XSD files ({error}); fetch them by hand:"
+                f" for f in {' '.join(XSD_FILES)}; do curl -o {XSD_CACHE}/$f {XSD_BASE}$f; done"
+            )
+            if os.environ.get("CI") == "true":
+                pytest.fail(message)
+            pytest.skip(message)
+    return xmlschema.XMLSchema(XSD_CACHE / "archimate3_Model.xsd")
+
+
+@pytest.fixture
+def every_category_inventory(make_application, make_component):
+    return Inventory(
+        {"a": make_application("a", it_components=["s", "h", "t"])},
+        {
+            "s": make_component("s", category="software"),
+            "h": make_component("h", category="hardware"),
+            "t": make_component("t", category="service"),
+        },
+    )
+
+
+def test_export_of_the_curated_data_set_is_valid_against_the_xsd(model, xsd_schema):
+    xsd_schema.validate(to_xml(model))
+
+
+def test_export_with_every_component_category_is_valid_against_the_xsd(
+    every_category_inventory, xsd_schema
+):
+    inventory = every_category_inventory
+    xsd_schema.validate(
+        to_xml(build_model(inventory, build_graph(inventory), REFERENCE))
+    )
+
+
+def test_an_invalid_document_is_rejected_by_the_schema(xsd_schema):
+    # The schema is really applied: an unknown element type fails.
+    empty = Inventory({}, {})
+    text = to_xml(build_model(empty, build_graph(empty), REFERENCE))
+    broken = text.replace(
+        "<elements />",
+        '<elements><element identifier="x" xsi:type="Nope">'
+        '<name xml:lang="en">x</name></element></elements>',
+    )
+    assert broken != text
+    with pytest.raises(xmlschema.XMLSchemaException):
+        xsd_schema.validate(broken)
+
+
+# Step 3, level 2: every relationship is allowed by Archi's matrix, which the XSD does not
+# enforce. Source: Archi relationships.xml and relationships-keys.xml, read on 2026-10-16
+# (https://github.com/archimatetool/archi/tree/master/com.archimatetool.model/model).
+# Serving is the letter "v": ApplicationComponent -> ApplicationComponent "cfgorstv";
+# SystemSoftware and Device -> ApplicationComponent "fortv"; TechnologyService ->
+# ApplicationComponent "fotv".
+ALLOWED_RELATIONSHIPS = {
+    ("ApplicationComponent", "ApplicationComponent", "Serving"),
+    ("SystemSoftware", "ApplicationComponent", "Serving"),
+    ("Device", "ApplicationComponent", "Serving"),
+    ("TechnologyService", "ApplicationComponent", "Serving"),
+}
+
+
+def relationship_triples(model):
+    types = {e.identifier: e.type for e in model.elements}
+    return {(types[r.source], types[r.target], r.type) for r in model.relationships}
+
+
+def test_every_relationship_of_the_curated_data_set_is_allowed_by_archi(model):
+    assert relationship_triples(model) <= ALLOWED_RELATIONSHIPS
+
+
+def test_every_component_category_gives_an_allowed_relationship(
+    every_category_inventory,
+):
+    inventory = every_category_inventory
+    triples = relationship_triples(
+        build_model(inventory, build_graph(inventory), REFERENCE)
+    )
+    assert triples == ALLOWED_RELATIONSHIPS - {
+        ("ApplicationComponent", "ApplicationComponent", "Serving")
+    }
