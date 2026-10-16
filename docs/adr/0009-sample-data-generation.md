@@ -48,7 +48,7 @@ This differs from ADR-0006, where `generated/` is produced by the CI and never c
 
 - Positive: the scoping note's 60 records, a realistic landscape centred on the pivots, the anomaly list under control by construction and by test, a data set that is the same everywhere, generated records that cannot drift from the script.
 - Negative: 45 more files in the repository; one more CI step; the "script first" discipline for generated records; the lifecycle dates of generated applications are plausible, not researched; the domain information exists only in comments until the schema carries it.
-- Follow-up: the `domain` field and a domain view if the maps at 60 call for it; a headless Archi import of the 69-record model; the job summary may need to show only the data center box.
+- Follow-up, first item of v1.1: a readable migration map. Observed on 2026-10-16 at 60 applications: the hosting view no longer answers the trigger of the scoping note (what leaves the data center and what it talks to): a SaaS column of 17 applications, 185 arrows across the whole height; the global view stays readable and shows the domains grouping by themselves around their pivots. In v1 only the report and the Archi export cover the migration question. Two options to decide then: (a) a `domain` field and a domain view, amendment of ADR-0001 (six boxes of 6 to 10 applications); (b) the hosting view filtered on one box, for example the data center alone with its outgoing links, with no schema change. Then: a headless Archi import of the 69-record model; the job summary may need to show only the data center box.
 
 ## Sources
 

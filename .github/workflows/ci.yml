@@ -1,13 +1,15 @@
-# Continuous integration: lint, format check, inventory validation, anomaly
-# report, maps, Archi export and tests on every push and pull request, plus a
-# nightly run so that the report is at the date of the day. The inventory is validated and the
-# deliverables built before the tests, because one test loads the real
-# inventory/ and would fail with a traceback. The report and the hosting map are
-# shown on the run page; everything under generated/ is uploaded as the
-# "deliverables" artifact; nothing is committed (ADR-0006, ADR-0007). Graphviz
-# comes from apt, the one unpinned installation (ADR-0007). Tooling: ADR-0002.
-# Exit statuses: ADR-0004 and ADR-0006. Actions and the runner image are
-# pinned; updates are manual (see README, "Continuous integration").
+# Continuous integration: lint, format check, inventory validation, freshness
+# of the generated records, anomaly report, maps, Archi export and tests on
+# every push and pull request, plus a nightly run so that the report is at the
+# date of the day. The inventory is validated and the deliverables built before
+# the tests, because one test loads the real inventory/ and would fail with a
+# traceback. The report and the end-of-life map are shown on the run page;
+# everything under generated/ is uploaded as the "deliverables" artifact;
+# nothing under generated/ is committed (ADR-0006, ADR-0007), while the
+# generated records under inventory/ are committed and checked (ADR-0009).
+# Graphviz comes from apt, the one unpinned installation (ADR-0007). Tooling:
+# ADR-0002. Exit statuses: ADR-0004 and ADR-0006. Actions and the runner image
+# are pinned; updates are manual (see README, "Continuous integration").
 
 name: CI
 
@@ -48,6 +50,12 @@ jobs:
       - name: Validate the inventory
         run: uv run archinv validate
 
+      - name: Check that the generated records are up to date
+        # ADR-0009: generated records are committed; the script must have been run.
+        run: |
+          uv run python scripts/generate_sample_inventory.py
+          git diff --exit-code -- inventory/
+
       - name: Build the anomaly report
         run: uv run archinv report --deadline 2028-03-31 --output generated/report.md
 
@@ -71,15 +79,15 @@ jobs:
             dot -Tsvg "$file" -o "${file%.dot}.svg"
           done
 
-      - name: Show the report and the hosting map on the run page
+      - name: Show the report and the end-of-life map on the run page
         run: |
           cat generated/report.md >> "$GITHUB_STEP_SUMMARY"
           {
             echo
-            echo "## Dependency map by hosting"
+            echo "## End-of-life exposure"
             echo
             echo '```mermaid'
-            cat generated/map-hosting.mmd
+            cat generated/map-end-of-life.mmd
             echo '```'
             echo
             echo "Dashed border: no business owner. Red: runs on a component past end of life. Orange: runs on a component reaching end of life before 2028-03-31."
