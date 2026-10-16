@@ -1,6 +1,6 @@
 [project]
 name = "archinv"
-version = "0.1.0"
+version = "1.0.0"
 description = "Application inventory as code: validate a YAML inventory, build dependency maps and an anomaly report."
 readme = "README.md"
 authors = [
