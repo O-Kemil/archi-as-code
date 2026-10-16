@@ -1,6 +1,6 @@
 # Continuous integration: lint, format check, inventory validation, anomaly
-# report, maps and tests on every push and pull request, plus a nightly run so
-# that the report is at the date of the day. The inventory is validated and the
+# report, maps, Archi export and tests on every push and pull request, plus a
+# nightly run so that the report is at the date of the day. The inventory is validated and the
 # deliverables built before the tests, because one test loads the real
 # inventory/ and would fail with a traceback. The report and the hosting map are
 # shown on the run page; everything under generated/ is uploaded as the
@@ -57,6 +57,9 @@ jobs:
             uv run archinv map --format mermaid --view "$view" --deadline 2028-03-31 --output "generated/map-$view.mmd"
             uv run archinv map --format dot --view "$view" --deadline 2028-03-31 --output "generated/map-$view.dot"
           done
+
+      - name: Build the Archi export
+        run: uv run archinv archi --name "Maison Zola application inventory" --output generated/inventory.archimate.xml
 
       - name: Install Graphviz
         # The one unpinned installation of the workflow (ADR-0007, decision 6).
